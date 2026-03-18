@@ -1,0 +1,55 @@
+# Xcode
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcscmblueprint
+
+# Xcode DerivedData
+DerivedData/
+build/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods (not used here, but common)
+Pods/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Claude Code (local settings, not source)
+.claude/
+
+# Xcode local DerivedData symlink
+.derived/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+__MACOSX/
+
+# XcodeGen (generated file — regenerate with `xcodegen generate`)
+PiDay.xcodeproj/
+
+# SPM resolved file (commit if you want reproducible builds)
+# Package.resolved
+
+# Simulator / test output
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Credentials / secrets
+*.p12
+*.mobileprovision
+AuthKey_*.p8

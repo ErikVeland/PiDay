@@ -1,0 +1,122 @@
+name: PiDay
+options:
+  bundleIdPrefix: academy.glasscode
+  deploymentTarget:
+    iOS: "17.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    GENERATE_INFOPLIST_FILE: YES
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: 1.0
+targets:
+  PiDay:
+    type: application
+    platform: iOS
+    entitlements:
+      path: PiDay/PiDay.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.academy.glasscode.piday
+    sources:
+      - path: PiDay
+        excludes:
+          - Resources
+      - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    # The widget extension must be listed as a dependency of the app so
+    # XcodeGen embeds it inside the app bundle automatically.
+    dependencies:
+      - target: PiDayWidget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday
+        PRODUCT_NAME: PiDay
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # iOS 18+ dark and tinted adaptive icons.
+        # Add AppIcon-dark.appiconset and AppIcon-tinted.appiconset to the asset
+        # catalog and set ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES once those
+        # assets are created. XcodeGen will then surface them automatically.
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_CFBundleDisplayName: PiDay
+        INFOPLIST_KEY_NSUserNotificationUsageDescription: "PiDay sends you a reminder on Pi Day (March 14) so you can celebrate with your digits."
+        CODE_SIGN_STYLE: Automatic
+        # Mac Catalyst lets the iOS app (and its widget) run on macOS.
+        # This covers iOS, iPadOS, and macOS with a single widget extension.
+        SUPPORTS_MACCATALYST: YES
+    scheme:
+      testTargets:
+        - PiDayTests
+
+  # Widget extension target.
+  # It shares Core/ source files with the main app rather than using a framework,
+  # which is the right call for a single-app project of this size.
+  PiDayWidget:
+    type: app-extension
+    platform: iOS
+    entitlements:
+      path: PiDayWidget/PiDayWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.academy.glasscode.piday
+    sources:
+      # The widget-specific files
+      - path: PiDayWidget
+      # Shared domain/data/repository layer
+      # WHY list files individually: we only want the types the widget
+      # actually needs. Including the full PiDay/ folder would bring in
+      # SwiftUI views, AppViewModel, and other things that don't compile
+      # in an extension context.
+      - path: PiDay/Core/Domain/DateFormatOption.swift
+      - path: PiDay/Core/Domain/AppTheme.swift
+      - path: PiDay/Core/Domain/IndexingConvention.swift
+      - path: PiDay/Core/Domain/PiMatch.swift
+      - path: PiDay/Core/Domain/SearchFormatPreference.swift
+      - path: PiDay/Core/Data/DateStringGenerator.swift
+      - path: PiDay/Core/Data/PiIndexPayload.swift
+      - path: PiDay/Core/Repository/PiStore.swift
+      - path: PiDay/Design/PiPalette.swift
+      # The widget needs its own copy of the JSON index in its bundle.
+      - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDayWidget/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      # AppIntents is required for AdvanceDateIntent (interactive widget buttons, iOS 17).
+      - sdk: AppIntents.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.PiDayWidget
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: YES
+        # Override the global GENERATE_INFOPLIST_FILE=YES so Xcode uses our
+        # hand-written Info.plist instead of auto-generating one.
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: PiDayWidget/Info.plist
+  PiDayTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - PiDayTests
+      - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+    dependencies:
+      - target: PiDay
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.tests
+        GENERATE_INFOPLIST_FILE: YES
