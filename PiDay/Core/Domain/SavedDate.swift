@@ -93,6 +93,10 @@ struct SavedDate: Codable, Identifiable, Equatable {
         components.month = month
         components.day = day
         components.hour = 12
-        return calendar.date(from: components) ?? .now
+        // This can only fail if the stored year/month/day components are invalid
+        // (e.g. Feb 30). Since they are always decomposed from a real Date in init,
+        // this fallback should never be reached. Using a distant-past sentinel makes
+        // any bug immediately visible in the UI rather than silently showing "today".
+        return calendar.date(from: components) ?? Date(timeIntervalSince1970: 0)
     }
 }

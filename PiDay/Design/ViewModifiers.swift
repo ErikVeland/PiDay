@@ -61,11 +61,11 @@ struct GlassCardModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
+            // WHY no background fill on iOS 26: Liquid Glass already provides its own
+            // translucent surface material. Adding an opaque fill behind it stacks two
+            // surfaces and makes the card look muddy/non-glassy. The border overlay is
+            // kept because it adds definition at card edges that glass alone doesn't provide.
             content
-                .background(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(palette.paneSurfaceFill(for: colorScheme))
-                )
                 .glassEffect(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)

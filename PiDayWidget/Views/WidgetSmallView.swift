@@ -38,6 +38,7 @@ struct WidgetSmallView: View {
                 ColoredQueryText(
                     query: query,
                     format: format,
+                    date: entry.date,
                     font: .system(.title3, design: .monospaced, weight: .bold),
                     palette: entry.palette
                 )

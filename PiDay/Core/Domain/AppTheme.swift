@@ -289,9 +289,10 @@ enum AppTheme: String, CaseIterable, Identifiable, Codable {
     // Used by swatches and the wordmark halo.
     var isDark: Bool { defaultColorScheme == .dark }
 
-    // Not used to force a color scheme at the window level — that is driven by
-    // AppAppearanceMode. Kept for any call sites that may reference it.
-    var preferredColorScheme: ColorScheme? { nil }
+    // Whether this theme uses the per-character animated canvas renderer.
+    // Views check this instead of comparing against the .matrix case directly,
+    // keeping the view decoupled from the theme enum.
+    var isAnimated: Bool { self == .matrix }
 
     // ── Swatch preview colours ───────────────────────────────────────────────
     // These two colours are enough to communicate a theme's identity in a

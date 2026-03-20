@@ -2,8 +2,10 @@ import SwiftUI
 
 // ── Layout structure ──────────────────────────────────────────────────────────
 //
-// NavigationStack
-//   └── List (.insetGrouped)
+// (No NavigationStack — this view is pushed inside DetailSheetView's stack via
+//  .navigationDestination. See body comment for why.)
+//
+// List (.insetGrouped)
 //         ├── Section "Appearance"
 //         │     ├── themePickerRow   — horizontal ScrollView of ThemeSwatchButtons,
 //         │     │                      listRowInsets(.zero) so tiles bleed to the edge
@@ -38,7 +40,7 @@ struct PreferencesView: View {
     @Environment(AppViewModel.self)    private var viewModel
     @Environment(PreferencesStore.self) private var store
     @Environment(\.colorScheme) private var colorScheme
-    @Binding var isPresented: Bool
+    @Environment(\.dismiss) private var dismiss
     private let twoColumnGrid = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
 
     // WHY a local computed var (not a let): the palette must re-derive whenever
@@ -46,29 +48,36 @@ struct PreferencesView: View {
     // when any accessed store property changes, which re-derives palette too.
     private var palette: ThemePalette { store.resolvedPalette }
 
+    // WHY no NavigationStack here: PreferencesView is pushed via
+    // .navigationDestination inside DetailSheetView's own NavigationStack.
+    // Nesting NavigationStacks is unsupported in SwiftUI — Apple states inner
+    // stacks are ignored and the toolbars conflict. All navigation modifiers
+    // (.navigationTitle, .toolbar, etc.) are applied directly to the List so
+    // the parent NavigationStack picks them up correctly.
     var body: some View {
-        NavigationStack {
-            List {
-                appearanceSection
-                colourCodingSection
-                typographySection
-                formatSection
-                aboutSection
-            }
-            .listStyle(.insetGrouped)
-            // WHY .tint: FontStyleButton, DigitSizeButton, and Picker views inside
-            // the List use Color.accentColor for their selected/active state. Without
-            // this, they render in system blue regardless of the active theme.
-            .tint(palette.accent)
-            .navigationTitle("Preferences")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { isPresented = false }
-                        .font(.body.weight(.semibold))
-                }
+        List {
+            appearanceSection
+            colourCodingSection
+            typographySection
+            formatSection
+            aboutSection
+        }
+        .listStyle(.insetGrouped)
+        // WHY .tint: FontStyleButton, DigitSizeButton, and Picker views inside
+        // the List use Color.accentColor for their selected/active state. Without
+        // this, they render in system blue regardless of the active theme.
+        .tint(palette.accent)
+        .navigationTitle("Preferences")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Done") { dismiss() }
+                    .font(.body.weight(.semibold))
             }
         }
+        // preferredColorScheme bubbles up through the parent NavigationStack
+        // to the window, so placing it here (rather than outside a now-removed
+        // NavigationStack wrapper) has exactly the same effect.
         .preferredColorScheme(store.resolvedPreferredColorScheme)
     }
 

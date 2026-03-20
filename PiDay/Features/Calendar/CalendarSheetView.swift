@@ -1,4 +1,5 @@
 import SwiftUI
+import ContactsUI
 
 // WHY: Extracting the calendar sheet into its own file makes it independently
 // navigable. Day cell rendering, heat-map logic, and accessibility labels are
@@ -10,6 +11,8 @@ struct CalendarSheetView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Binding var isPresented: Bool
     @State private var hapticTrigger = false
+    @State private var showBirthdayPicker = false
+    @State private var partialBirthday: PartialBirthday? = nil
 
     @ScaledMetric private var dayCellSize: CGFloat = 46
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 7)
@@ -50,6 +53,20 @@ struct CalendarSheetView: View {
         }
         .preferredColorScheme(preferences.resolvedPreferredColorScheme)
         .sensoryFeedback(.selection, trigger: hapticTrigger)
+        // WHY .background for the picker: ContactPickerPresenter is an invisible
+        // UIViewController host. Attaching it as a background keeps it in the view
+        // hierarchy without contributing any visual space or layout influence.
+        .background(
+            ContactPickerPresenter(isPresented: $showBirthdayPicker, onContact: handleContact)
+        )
+        // Year prompt — only shown when a contact's birthday has no year stored.
+        .sheet(item: $partialBirthday) { partial in
+            BirthdayYearPromptView(partial: partial) { date in
+                viewModel.selectBirthday(date)
+                isPresented = false
+            }
+            .presentationDetents([.medium])
+        }
     }
 
     // MARK: - Sections
@@ -72,6 +89,7 @@ struct CalendarSheetView: View {
                 Spacer()
 
                 HStack(spacing: 10) {
+                    birthdayButton(palette: palette)
                     monthControl(systemName: "chevron.left", palette: palette, action: viewModel.showPreviousMonth)
                     monthControl(systemName: "chevron.right", palette: palette, action: viewModel.showNextMonth)
                 }
@@ -124,37 +142,65 @@ struct CalendarSheetView: View {
 
     private func legendRow(palette: ThemePalette) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 12) {
-                legendDot(palette.heatNone,  label: "Not found", palette: palette)
-                legendDot(palette.heatFaint, label: "Faint",     palette: palette)
-                legendDot(palette.heatCool,  label: "Cool",      palette: palette)
-                legendDot(palette.heatWarm,  label: "Warm",      palette: palette)
-                legendDot(palette.heatHot,   label: "Hot",       palette: palette)
+            // WHY directional layout: "Earlier in Pi" conveys that hot = rare/early,
+            // which is non-obvious. Bare colour dots with labels don't communicate
+            // the ordering relationship — the arrow cues do.
+            HStack(spacing: 0) {
+                Text("Not found")
+                    .font(.caption2)
+                    .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+
+                Spacer(minLength: 8)
+
+                HStack(spacing: 5) {
+                    Text("Later")
+                        .font(.caption2)
+                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                        .minimumScaleFactor(0.75)
+                        .lineLimit(1)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                    legendDot(palette.heatNone,  palette: palette)
+                    legendDot(palette.heatFaint, palette: palette)
+                    legendDot(palette.heatCool,  palette: palette)
+                    legendDot(palette.heatWarm,  palette: palette)
+                    legendDot(palette.heatHot,   palette: palette)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                    Text("Earlier in π")
+                        .font(.caption2)
+                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                        .minimumScaleFactor(0.75)
+                        .lineLimit(1)
+                }
             }
 
-            Text("Based on position in the first 5B digits.")
+            Text("Based on earliest position in the first 5 billion digits.")
                 .font(.caption2)
                 .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
         }
         .padding(.top, 4)
     }
 
-    private func legendDot(_ color: Color, label: String, palette: ThemePalette) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 10, height: 10)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-        }
+    // WHY no label param: dots are now unlabelled in the directional flow;
+    // context is provided by the surrounding "Later → Earlier" text.
+    // WHY accessibilityHidden: the dots are decorative — the surrounding
+    // "Later → Earlier in π" text already conveys the full semantic meaning.
+    // Exposing unlabelled coloured circles to VoiceOver adds focus noise.
+    private func legendDot(_ color: Color, palette: ThemePalette) -> some View {
+        Circle()
+            .fill(color)
+            .frame(width: 10, height: 10)
+            .accessibilityHidden(true)
     }
 
     // MARK: - Day cell
 
     private func dayCell(for day: CalendarDay, palette: ThemePalette) -> some View {
         let summary = viewModel.daySummaries[day.date]
-        let heatLevel = summary?.heatLevel(using: viewModel.indexingConvention) ?? .none
+        let heatLevel = summary?.heatLevel ?? .none
         let isToday = day.isInDisplayedMonth && day.date == viewModel.today
 
         return Button {
@@ -264,6 +310,45 @@ struct CalendarSheetView: View {
     }
 
     // MARK: - Support views
+
+    // WHY gift icon: universally understood symbol for "birthday present" — no label
+    // needed. The icon doubles as a subtle hint that this is for birthdays specifically.
+    private func birthdayButton(palette: ThemePalette) -> some View {
+        Button { showBirthdayPicker = true } label: {
+            Image(systemName: "gift")
+                .font(.system(size: 15, weight: .bold))
+                .frame(width: 44, height: 44)
+        }
+        .modifier(NativeGlassButtonModifier())
+        .foregroundStyle(palette.panePrimaryText(for: colorScheme))
+        .accessibilityLabel("Look up birthday from contacts")
+    }
+
+    // Handles the contact returned by the picker.
+    // WHY guard month + day before year: a birthday with only a year is not useful —
+    // we need at least month and day to identify the date. If both are present but year
+    // is nil, we show the year prompt. If all three are present, we jump directly.
+    private func handleContact(_ contact: CNContact) {
+        guard let bday = contact.birthday,
+              let month = bday.month,
+              let day   = bday.day else { return }
+
+        if let year = bday.year {
+            var comps       = DateComponents()
+            comps.year      = year
+            comps.month     = month
+            comps.day       = day
+            // WHY gregorian: birthday components from CNDateComponents are in the
+            // Gregorian calendar. Using Calendar.current (which could be Buddhist,
+            // Hebrew, or Islamic on some devices) would produce an incorrect date.
+            guard let date  = Calendar(identifier: .gregorian).date(from: comps) else { return }
+            viewModel.selectBirthday(date)
+            isPresented = false
+        } else {
+            // Year absent — prompt the user to supply it.
+            partialBirthday = PartialBirthday(month: month, day: day)
+        }
+    }
 
     private func monthControl(systemName: String, palette: ThemePalette, action: @escaping () -> Void) -> some View {
         Button(action: action) {

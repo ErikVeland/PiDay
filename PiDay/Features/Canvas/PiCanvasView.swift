@@ -11,6 +11,14 @@ struct PiCanvasView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let revealSequence: Bool
 
+    // WHY reference-type wrapper: both caches are mutated inside body (via
+    // cachedGlyphWidth and cachedBodyLayout). Mutating a class *instance* stored
+    // in @State does not change the @State value (the reference stays the same),
+    // so SwiftUI never sees a "state modified during view update." Using separate
+    // @State structs would trigger that warning because assigning a new struct
+    // value IS a state change from SwiftUI's perspective.
+    @State private var canvasCache = CanvasCache()
+
     var body: some View {
         GeometryReader { geometry in
             piCanvas(in: geometry.size)
@@ -57,17 +65,15 @@ struct PiCanvasView: View {
             Spacer(minLength: 8)
 
             if let match = viewModel.bestMatch {
-                // WHY HStack decomposition: AnimatedCounterView needs its own view
-                // identity so .contentTransition(.numericText) can roll the digits
-                // smoothly. A plain string interpolation in Text is a static snapshot.
-                HStack(spacing: 0) {
-                    Text("[digit ")
-                    AnimatedCounterView(target: viewModel.displayedPosition(for: match.storedPosition))
-                    Text("]")
-                }
-                .font(preferences.fontStyle.font(size: metrics.headerFontSize, weight: preferences.fontWeight.fontWeight))
-                .foregroundStyle(palette.ink.opacity(0.92))
-                .fixedSize(horizontal: true, vertical: false)
+                // WHY format name instead of position: the result strip below already
+                // shows "digit X · Cool" with an animated counter. Repeating the
+                // position here creates a doubled display. The format name is more
+                // useful context for the canvas itself — it tells the user *which*
+                // date format is highlighted in the digit stream.
+                Text("[\(match.format.displayName)]")
+                    .font(preferences.fontStyle.font(size: metrics.headerFontSize, weight: preferences.fontWeight.fontWeight))
+                    .foregroundStyle(palette.ink.opacity(0.92))
+                    .fixedSize(horizontal: true, vertical: false)
             } else if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .font(preferences.fontStyle.font(size: metrics.headerFontSize, weight: preferences.fontWeight.fontWeight))
@@ -86,10 +92,10 @@ struct PiCanvasView: View {
     }
 
     private func digitContextBody(in size: CGSize, metrics: PiTextMetrics, palette: ThemePalette) -> some View {
-        let layout = makeBodyLayout(in: size, metrics: metrics)
+        let layout = cachedBodyLayout(in: size, metrics: metrics)
 
         return Group {
-            if preferences.theme == .matrix {
+            if preferences.theme.isAnimated {
                 TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
                     matrixBodyText(
                         for: layout,
@@ -104,14 +110,17 @@ struct PiCanvasView: View {
                 bodyText(for: layout, bodyWidth: metrics.bodyWidth, fontSize: metrics.bodyFontSize, palette: palette)
             }
         }
-        // WHY scaleEffect before the outer frame: bodyWidth = columns * glyphWidth (including
-        // a small inter-glyph buffer) is always slightly less than viewportWidth. Scaling the
-        // rendered content to fill the exact viewport closes the sub-glyph gap and makes digits
-        // reach both edges regardless of font style, weight, or size. The stretch is ≤ ~4%
-        // and imperceptible on a dense monospaced digit grid.
-        .scaleEffect(x: metrics.bodyScaleX, y: 1.0, anchor: .topLeading)
-        .frame(width: metrics.viewportWidth, alignment: .top)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // WHY topLeading + clipped: bodyWidth is deliberately wider than viewportWidth
+        // (extra overflow columns ensure this even if the UIKit glyph measurement is
+        // slightly generous). topLeading pins the first character at x = 0 so the left
+        // edge is always flush; the overflow on the right is clipped, giving a clean
+        // right edge. Both frames must use .topLeading — using .top on the outer frame
+        // would center the viewport in the available space and produce a visible left margin.
+        .frame(width: metrics.viewportWidth, alignment: .topLeading)
+        .clipped()
+        .opacity(isNotFound ? 0.08 : 1.0)
+        .animation(.easeInOut(duration: 0.3), value: isNotFound)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .mask(
             LinearGradient(
                 colors: [
@@ -155,6 +164,12 @@ struct PiCanvasView: View {
         let lineSpacing = fontSize * 0.34
         let rows = layout.lines.count
 
+        // WHY drawingGroup: each character renders as 6 stacked Text views with
+        // .blur() and .shadow() — two of the most GPU-intensive SwiftUI modifiers.
+        // At ~600 characters × 24 fps that's thousands of individual Metal compositing
+        // passes per second. drawingGroup() rasterises the entire VStack into one
+        // offscreen Metal texture first, then composites it once — collapsing those
+        // passes into a single GPU operation regardless of how many layers are inside.
         return VStack(alignment: .leading, spacing: lineSpacing) {
             ForEach(Array(layout.lines.enumerated()), id: \.offset) { rowIdx, line in
                 HStack(spacing: 0) {
@@ -169,6 +184,7 @@ struct PiCanvasView: View {
                 }
             }
         }
+        .drawingGroup()
         .font(.system(size: fontSize, weight: preferences.fontWeight.fontWeight, design: .monospaced))
         .allowsHitTesting(false)
         .frame(width: bodyWidth, alignment: .leading)
@@ -369,14 +385,18 @@ struct PiCanvasView: View {
         let bodyTopInset = max(0, desiredBodyTopInset)
 
         let rows = max(8, Int((size.height - bodyTopInset) / lineHeight))
-        let glyphWidth = max(1, measuredGlyphWidth(for: bodyFontSize) + 0.8)
+        let glyphWidth = max(1, cachedGlyphWidth(for: bodyFontSize))
         let viewportWidth = max(120, floor(usableWidth))
-        let rawColumns = max(max(queryLength + 8, 16), Int(floor(viewportWidth / glyphWidth)))
+        // WHY ceil: we want bodyWidth ≥ viewportWidth so content always overflows
+        // the right edge. clipped() in digitContextBody then cuts it cleanly.
+        // floor-based columns + scaleEffect required accurate UIKit measurement;
+        // ceil + clip is measurement-agnostic — overflow is guaranteed regardless
+        // of how the font actually renders.
+        // WHY + 2: guarantees the rendered text overflows the viewport even if the
+        // actual SwiftUI advance width is marginally narrower than the UIKit measurement.
+        let rawColumns = max(max(queryLength + 8, 16), Int(ceil(viewportWidth / glyphWidth)) + 2)
         let columns = alignedColumnCount(rawColumns, queryLength: queryLength)
         let bodyWidth = CGFloat(columns) * glyphWidth
-        // Scale factor that closes the sub-glyph gap between bodyWidth and viewportWidth,
-        // making characters fill exactly edge-to-edge regardless of font weight or size.
-        let bodyScaleX = bodyWidth > 0 ? viewportWidth / bodyWidth : 1.0
 
         return PiTextMetrics(
             bodyFontSize: bodyFontSize,
@@ -390,7 +410,6 @@ struct PiCanvasView: View {
             headerDigitCount: max(12, columns - 10),
             glyphWidth: glyphWidth,
             bodyWidth: bodyWidth,
-            bodyScaleX: bodyScaleX,
             viewportWidth: viewportWidth
         )
     }
@@ -433,6 +452,31 @@ struct PiCanvasView: View {
         return PiBodyLayout(lines: lines, highlightedStart: context.highlightStart)
     }
 
+    private func cachedBodyLayout(in size: CGSize, metrics: PiTextMetrics) -> PiBodyLayout {
+        let query = viewModel.exactQuery
+        let format = viewModel.activeFormat
+        if let c = canvasCache.bodyLayout,
+           c.size == size,
+           c.query == query,
+           c.format == format,
+           c.fontStyle == preferences.fontStyle,
+           c.weight == preferences.fontWeight,
+           c.digitSize == preferences.digitSize {
+            return c.layout
+        }
+        let layout = makeBodyLayout(in: size, metrics: metrics)
+        canvasCache.bodyLayout = BodyLayoutCache(
+            size: size,
+            query: query,
+            format: format,
+            fontStyle: preferences.fontStyle,
+            weight: preferences.fontWeight,
+            digitSize: preferences.digitSize,
+            layout: layout
+        )
+        return layout
+    }
+
     private func exactContextSource(totalCharacters: Int, targetStart: Int, query: String) -> (visibleText: String, highlightStart: Int) {
         guard let match = viewModel.bestMatch else {
             let fallback = String(repeating: query, count: max(8, totalCharacters / max(1, query.count) + 6))
@@ -469,8 +513,9 @@ struct PiCanvasView: View {
     }
 
     // Delegates to DateFormatOption.queryParts — single source of truth.
+    // Pass selectedDate so D/M/YYYY can determine the correct day digit count.
     private func highlightedParts(for query: String, format: DateFormatOption) -> (day: String, month: String, year: String) {
-        format.queryParts(from: query)
+        format.queryParts(from: query, date: viewModel.selectedDate)
     }
 
     // MARK: - Helpers
@@ -482,11 +527,10 @@ struct PiCanvasView: View {
     private static let piBase = "3.141592653589793238462643383279502884197169399375105820974944592"
 
     private func piLeadDigits(count: Int) -> String {
-        let base = Self.piBase
-        if count <= base.count { return String(base.prefix(count)) }
-        let remainder = count - base.count
-        let padding = String(repeating: "31415926", count: max(1, remainder / 8 + 1))
-        return base + String(padding.prefix(remainder))
+        // WHY clamp: repeating "31415926" beyond the known-correct digits is wrong.
+        // Pi enthusiasts (the entire target demographic) will notice. Honest truncation
+        // at the boundary is better than confident fiction.
+        String(Self.piBase.prefix(min(count, Self.piBase.count)))
     }
 
     private func formattedPosition(_ storedPosition: Int) -> String {
@@ -495,9 +539,32 @@ struct PiCanvasView: View {
 
     private func measuredGlyphWidth(for fontSize: CGFloat) -> CGFloat {
         let uiFont = preferences.fontStyle.uiFont(size: fontSize, weight: preferences.fontWeight.fontWeight)
-        let sample = "0" as NSString
+        // WHY 10-char sample without ceil: measuring a single character and rounding up
+        // inflated the per-glyph width by up to 0.7 pt. Over 40+ columns that accumulates
+        // into a visible gap on the right edge. Averaging across 10 glyphs gives a precise
+        // fractional advance width that tracks what SwiftUI actually renders.
+        let sample = "0000000000" as NSString
         let attributes: [NSAttributedString.Key: Any] = [.font: uiFont]
-        return ceil(sample.size(withAttributes: attributes).width)
+        return sample.size(withAttributes: attributes).width / 10.0
+    }
+
+    private func cachedGlyphWidth(for fontSize: CGFloat) -> CGFloat {
+        if let c = canvasCache.glyphWidth,
+           c.fontStyle == preferences.fontStyle,
+           c.weight == preferences.fontWeight,
+           c.digitSize == preferences.digitSize,
+           c.fontSize == fontSize {
+            return c.width
+        }
+        let width = measuredGlyphWidth(for: fontSize)
+        canvasCache.glyphWidth = GlyphWidthCache(
+            fontStyle: preferences.fontStyle,
+            weight: preferences.fontWeight,
+            digitSize: preferences.digitSize,
+            fontSize: fontSize,
+            width: width
+        )
+        return width
     }
 
     private func centeredQueryColumn(totalColumns: Int, queryLength: Int) -> Int {
@@ -514,12 +581,27 @@ struct PiCanvasView: View {
         if parityMatches {
             return rawColumns
         }
-        return max(minimumColumns, rawColumns - 1)
+        // WHY +1 instead of -1: bodyWidth must stay ≥ viewportWidth.
+        // Subtracting shrinks below the viewport; adding keeps parity AND keeps overflow.
+        return rawColumns + 1
+    }
+
+    // True when a lookup has completed with no match and no error.
+    // WHY exclude isLoading: we don't want to flash the faded state during the
+    // brief moment between navigation and lookup completion.
+    // WHY exclude errorMessage: a network error shouldn't look like "not found".
+    private var isNotFound: Bool {
+        !viewModel.isLoading
+            && viewModel.bestMatch == nil
+            && viewModel.errorMessage == nil
+            && viewModel.isSelectedDateInRange
     }
 
     private func focusGlow(palette: ThemePalette) -> some View {
         Group {
-            if preferences.theme == .matrix {
+            if preferences.theme.isAnimated {
+                // Matrix: phosphor-green CRT bloom — .screen adds light, which is
+                // exactly the aesthetic for the retro terminal look.
                 RadialGradient(
                     colors: [
                         palette.accent.opacity(0.0),
@@ -533,7 +615,27 @@ struct PiCanvasView: View {
                 )
                 .blendMode(.screen)
                 .ignoresSafeArea()
+            } else if preferences.effectiveColorScheme == .dark {
+                // WHY dark vignette instead of .screen glow: the original white-based
+                // focusGlow with .screen creates bright halos on dark backgrounds —
+                // it ADDS visibility to edge text instead of fading it out. Overlaying
+                // the theme's own background colour fades peripheral digits naturally
+                // into the surrounding canvas, keeping the centre crisp.
+                RadialGradient(
+                    colors: [
+                        Color.clear,
+                        Color.clear,
+                        palette.background.opacity(0.55),
+                        palette.background.opacity(0.88)
+                    ],
+                    center: .center,
+                    startRadius: 50,
+                    endRadius: 400
+                )
+                .ignoresSafeArea()
             } else {
+                // Light themes: warm centre glow — .screen on a light background is
+                // barely perceptible, just a subtle lift in the viewing area.
                 PiPalette.focusGlow
                     .blendMode(.screen)
                     .ignoresSafeArea()
@@ -575,6 +677,16 @@ struct PiCanvasView: View {
 }
 
 // MARK: - Layout types (private to this feature)
+
+// Holds both layout caches as mutable class state.
+// WHY class (not struct): @State holds a reference to this object. Mutating
+// its properties does not change the @State reference, so SwiftUI never sees
+// "state modified during view update" — the warning that fires when you assign
+// new struct values to @State inside body.
+private final class CanvasCache {
+    var glyphWidth: GlyphWidthCache?
+    var bodyLayout: BodyLayoutCache?
+}
 
 // Per-character data for Matrix rain rendering.
 // id == column index, unique within each row's ForEach.
@@ -622,7 +734,6 @@ private struct PiTextMetrics {
     let headerDigitCount: Int
     let glyphWidth: CGFloat
     let bodyWidth: CGFloat
-    let bodyScaleX: CGFloat
     let viewportWidth: CGFloat
 }
 
@@ -638,4 +749,22 @@ private struct PiContextLine {
     let year: String
     let after: String
     let isHighlighted: Bool
+}
+
+private struct GlyphWidthCache {
+    let fontStyle: AppFontStyle
+    let weight: AppFontWeight
+    let digitSize: DigitSize
+    let fontSize: CGFloat
+    let width: CGFloat
+}
+
+private struct BodyLayoutCache {
+    let size: CGSize
+    let query: String
+    let format: DateFormatOption
+    let fontStyle: AppFontStyle
+    let weight: AppFontWeight
+    let digitSize: DigitSize
+    let layout: PiBodyLayout
 }

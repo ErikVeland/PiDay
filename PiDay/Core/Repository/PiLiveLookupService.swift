@@ -74,7 +74,7 @@ final class PiLiveLookupService: @unchecked Sendable {
             }
         }
 
-        matches.sort(by: sortMatches)
+        matches.sort(by: PiMatchResult.sortByPosition)
 
         let bestMatch = matches
             .compactMap { result -> BestPiMatch? in
@@ -155,12 +155,4 @@ final class PiLiveLookupService: @unchecked Sendable {
         return decoded.content
     }
 
-    private func sortMatches(_ left: PiMatchResult, _ right: PiMatchResult) -> Bool {
-        switch (left.storedPosition, right.storedPosition) {
-        case let (lhs?, rhs?): return lhs < rhs
-        case (_?, nil): return true
-        case (nil, _?): return false
-        case (nil, nil): return left.format.displayName < right.format.displayName
-        }
-    }
 }

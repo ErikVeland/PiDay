@@ -30,6 +30,12 @@ final class FreeSearchViewModel {
     var errorMessage: String?
     var hasSearched = false
 
+    // WHY no deinit cancellation: @Observable macro-expanded properties can't be
+    // accessed from nonisolated deinit in Swift 6. The [weak self] capture in the
+    // task closure already ensures the ViewModel is not retained beyond its owner
+    // (FreeSearchView). After deallocation, self becomes nil and the task closure
+    // is a no-op at its next suspension point. A redundant API call may fire if
+    // the 400ms debounce has already elapsed, but results are dropped harmlessly.
     private var searchTask: Task<Void, Never>?
     // WHY a small excerptRadius for free search: we don't know how long the
     // query will be. 60 chars gives enough context without wasting bandwidth.
@@ -39,7 +45,12 @@ final class FreeSearchViewModel {
     func queryDidChange() {
         // Filter to digits only — the API only accepts digit strings.
         let digits = query.filter(\.isNumber)
-        query = digits  // reflect the filtered value back
+        // WHY explicit guard: assigning query = digits triggers @Observable's
+        // change notification, which re-fires onChange -> queryDidChange().
+        // @Observable suppresses the callback when the value is unchanged,
+        // breaking the loop — but that is implicit. The guard makes the
+        // termination condition obvious and safe under any future refactor.
+        if query != digits { query = digits }
 
         searchTask?.cancel()
         result = nil

@@ -6,6 +6,11 @@ import SwiftUI
 
 struct OnboardingView: View {
     let onDismiss: () -> Void
+    // WHY parameter with default: OnboardingView deliberately has no environment
+    // dependencies (it's safe for ImageRenderer). The caller passes the resolved
+    // accent colour from PreferencesStore so the onboarding matches the user's
+    // active theme. The default falls back to Frost blue if called without a palette.
+    var accentColor: Color = Color(red: 0.11, green: 0.44, blue: 0.85)
 
     @State private var currentPage = 0
 
@@ -19,18 +24,34 @@ struct OnboardingView: View {
             .tabViewStyle(.page(indexDisplayMode: .always))
             .ignoresSafeArea()
 
+            // Skip button — top-right, hidden on the final page where Get Started appears.
+            if currentPage < 2 {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button("Skip") { onDismiss() }
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 56)
+                            .padding(.trailing, 24)
+                    }
+                    Spacer()
+                }
+                .transition(.opacity)
+            }
+
             if currentPage == 2 {
                 Button {
                     onDismiss()
                 } label: {
-                    Text("Get Started →")
+                    Text("Get Started")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color(red: 0.11, green: 0.44, blue: 0.85))
+                                .fill(accentColor)
                         )
                 }
                 .padding(.horizontal, 32)
@@ -66,13 +87,14 @@ struct OnboardingView: View {
             symbol: "square.and.arrow.up",
             symbolIsText: false,
             title: "Share the discovery",
-            body: "Find your position, then share a card with friends."
+            body: "Find your position, then share a card with friends.",
+            isLast: true
         )
     }
 
     // MARK: - Card builder
 
-    private func onboardingCard(symbol: String, symbolIsText: Bool, title: String, body: String) -> some View {
+    private func onboardingCard(symbol: String, symbolIsText: Bool, title: String, body: String, isLast: Bool = false) -> some View {
         VStack(spacing: 0) {
             Spacer()
 
@@ -81,11 +103,11 @@ struct OnboardingView: View {
                     Text(symbol)
                         .font(.system(size: 80, weight: .black, design: .serif))
                         .italic()
-                        .foregroundStyle(Color(red: 0.11, green: 0.44, blue: 0.85))
+                        .foregroundStyle(accentColor)
                 } else {
                     Image(systemName: symbol)
                         .font(.system(size: 64, weight: .medium))
-                        .foregroundStyle(Color(red: 0.11, green: 0.44, blue: 0.85))
+                        .foregroundStyle(accentColor)
                 }
             }
             .padding(.bottom, 32)
@@ -101,6 +123,15 @@ struct OnboardingView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
                 .padding(.top, 12)
+
+            // Swipe affordance — replaced by Get Started button on the final card.
+            if !isLast {
+                Label("Swipe to continue", systemImage: "chevron.right")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.tertiary)
+                    .labelStyle(.titleAndIcon)
+                    .padding(.top, 28)
+            }
 
             Spacer()
             Spacer()

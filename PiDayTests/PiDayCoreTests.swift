@@ -152,6 +152,9 @@ final class PiDayCoreTests: XCTestCase {
     }
 
     func testSavedDateDecodesLegacyAbsoluteDatePayload() throws {
+        // 763603200 seconds since Apple's reference date (2001-01-01) = Pi Day 2025
+        // (not 1994 — the original test confused Unix epoch with Apple's reference epoch;
+        // JSONDecoder uses timeIntervalSinceReferenceDate, not timeIntervalSince1970).
         let legacyJSON = """
         {
           "id": "DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF",
@@ -163,7 +166,7 @@ final class PiDayCoreTests: XCTestCase {
         let decoded = try JSONDecoder().decode(SavedDate.self, from: Data(legacyJSON.utf8))
 
         XCTAssertEqual(decoded.label, "Birthday")
-        XCTAssertEqual(decoded.isoDate, "1994-03-14")
+        XCTAssertEqual(decoded.isoDate, "2025-03-14")
     }
 
     @MainActor
@@ -183,13 +186,25 @@ final class PiDayCoreTests: XCTestCase {
         let repository = MockPiRepository(summaryResult: summary)
         let viewModel = AppViewModel(today: date, calendar: calendar, repository: repository)
 
-        try? await Task.sleep(for: .milliseconds(50))
+        // WHY two conditions: load() fires scheduleSelectionRefresh() and then
+        // immediately sets isLoading=false — before the lookup Task has run.
+        // Polling only on isLoading exits too early, leaving lookupSummary nil.
+        // We also gate on lookupSummary==nil so we wait for the live lookup
+        // result to land before reading errorMessage. The mock is synchronous,
+        // so this converges in a handful of 10ms iterations.
+        var timeout = 200
+        while (viewModel.isLoading || viewModel.lookupSummary == nil) && timeout > 0 {
+            try? await Task.sleep(for: .milliseconds(10))
+            timeout -= 1
+        }
 
         XCTAssertEqual(viewModel.errorMessage, "Live pi lookup returned an unexpected response.")
         XCTAssertEqual(viewModel.headerStatusText, "Live pi lookup returned an unexpected response.")
-        XCTAssertEqual(
-            viewModel.detailShareText,
-            "Friday, 14 March 2042 could not be searched right now. Live pi lookup returned an unexpected response."
-        )
+        // WHY contains instead of equal: detailShareText prepends a locale-formatted
+        // date string (e.g. "Friday, 14 March 2042" in en-GB, "March 14, 2042" in en-US).
+        // Testing the invariant parts avoids CI failures on non-English locales.
+        let shareText = viewModel.detailShareText
+        XCTAssertTrue(shareText.contains("could not be searched right now."), "Unexpected share text: \(shareText)")
+        XCTAssertTrue(shareText.contains("Live pi lookup returned an unexpected response."), "Unexpected share text: \(shareText)")
     }
 }

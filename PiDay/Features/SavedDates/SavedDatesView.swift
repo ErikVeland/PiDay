@@ -51,9 +51,12 @@ struct SavedDatesView: View {
                 savedDateRow(saved)
             }
             .onDelete { indexSet in
-                for idx in indexSet {
-                    viewModel.savedDatesStore.delete(viewModel.savedDatesStore.dates[idx])
-                }
+                // WHY collect first: delete() mutates the array immediately.
+                // Deleting one-by-one shifts subsequent indices, causing wrong
+                // items to be deleted or an out-of-bounds crash when EditButton
+                // delivers a multi-index set.
+                let toDelete = indexSet.map { viewModel.savedDatesStore.dates[$0] }
+                toDelete.forEach { viewModel.savedDatesStore.delete($0) }
             }
         }
         .listStyle(.insetGrouped)

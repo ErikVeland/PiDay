@@ -90,7 +90,7 @@ struct FreeSearchView: View {
             resultCard(result, palette: palette)
         } else if searchVM.hasSearched && !searchVM.isLoading {
             notFoundCard(palette: palette)
-        } else if searchVM.query.isEmpty {
+        } else {
             hintCard(palette: palette)
         }
     }

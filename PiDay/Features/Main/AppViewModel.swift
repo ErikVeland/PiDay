@@ -50,6 +50,12 @@ final class AppViewModel {
     // WHY the view handles StoreKit: @Environment(\.requestReview) is only available in Views.
     var shouldPromptForRating = false
 
+    // WHY version counter (not Bool): MainView uses onChange(of:) which only fires when
+    // the value changes. A Bool could get "stuck" at true if two birthday selections arrive
+    // back-to-back without a false transition in between. Incrementing an Int guarantees
+    // each successful birthday lookup produces a unique value and therefore a distinct event.
+    private(set) var birthdayConfettiVersion = 0
+
     // Cached notification authorization state — loaded once in load() so sheets
     // don't re-query on every open.
     var notificationAuthState: NotificationService.AuthorizationState = .notDetermined
@@ -73,6 +79,8 @@ final class AppViewModel {
     private let maxCachedMonths = 6
 
     private var lookupTask: Task<Void, Never>?
+    // Set by selectBirthday(_:); consumed and cleared at the start of refreshSelection.
+    private var confettiPending = false
 
     // Tracks unique ISO date strings navigated; resets after triggering rating prompt.
     private var distinctDatesViewed: Set<String> = []
@@ -243,8 +251,26 @@ final class AppViewModel {
         return "No exact \(searchPreference.summary) hit in the first 5 billion digits of pi"
     }
 
+    /// Heat level of the best match for display in the result strip.
+    /// Uses storedPosition (raw, before convention offset) so the heat bucket is
+    /// consistent regardless of whether the user prefers 0-based or 1-based labeling.
+    var resultHeatLevel: PiHeatLevel {
+        guard let pos = bestMatch?.storedPosition else { return .none }
+        if pos < 1_000     { return .hot }
+        if pos < 100_000   { return .warm }
+        if pos < 10_000_000 { return .cool }
+        return .faint
+    }
+
     var detailShareText: String {
         let dateString = Self.fullDateFormatter.string(from: selectedDate)
+        // WHY isLoading guard: the share button is disabled while loading,
+        // but this computed property has no corresponding gate. Without it,
+        // a caller racing the loading state would read "not found" text when
+        // the lookup is still in flight — inconsistent with the disabled UI.
+        if isLoading {
+            return "\(dateString) is still being searched…"
+        }
         if let errorMessage {
             return "\(dateString) could not be searched right now. \(errorMessage)"
         }
@@ -308,6 +334,13 @@ final class AppViewModel {
     }
 
     func jumpToToday() { select(Date()) }
+
+    // Called by the birthday contact picker — same as select() but marks
+    // the upcoming lookup as celebration-worthy so confetti fires on match.
+    func selectBirthday(_ date: Date) {
+        confettiPending = true
+        select(date)
+    }
 
     // Clears the current error and re-triggers the lookup for the selected date.
     // Called by the retry button in DetailSheetView when a live lookup fails.
@@ -403,6 +436,13 @@ final class AppViewModel {
     }
 
     private func refreshSelection(for date: Date) async {
+        // WHY captured before any await: confettiPending must be read and cleared
+        // synchronously so that a subsequent birthday selection (which sets it to true
+        // again) is not accidentally consumed by this lookup. Capturing into a local
+        // Bool then resetting the flag atomically prevents both double-fire and loss.
+        let shouldCelebrate = confettiPending
+        confettiPending = false
+
         let normalized = calendar.startOfDay(for: date)
         let isLive = !repository.isInBundledRange(normalized)
 
@@ -417,7 +457,15 @@ final class AppViewModel {
 
         lookupSummary = summary
         errorMessage = summary.errorMessage
-        if isLive { isLoading = false }
+        // WHY unconditional: if the user navigates from a live date (which sets
+        // isLoading = true) to a bundled date before the live lookup completes,
+        // the live task is cancelled but isLoading stays true. The bundled task
+        // must clear it regardless of whether it was the one that set it.
+        isLoading = false
+
+        if shouldCelebrate && summary.bestMatch != nil {
+            birthdayConfettiVersion += 1
+        }
     }
 
     private func refreshMonth() {

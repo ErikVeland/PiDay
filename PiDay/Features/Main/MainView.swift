@@ -26,6 +26,8 @@ struct MainView: View {
     @State private var nextDayBounce = false
     @State private var calendarBounce = false
     @State private var detailsBounce = false
+    @State private var confettiTrigger = 0
+    @State private var showFreeSearch = false
 
     var body: some View {
         let palette = preferences.resolvedPalette
@@ -43,11 +45,19 @@ struct MainView: View {
                 Spacer()
             }
 
-            VStack {
+            VStack(spacing: 0) {
                 Spacer()
+                ResultStripView(onFreeSearch: { showFreeSearch = true })
+                    .padding(.bottom, 6)
                 bottomControls
                     .padding(.bottom, 18)
             }
+
+            // WHY overlay: confetti sits above the canvas but passes touches through
+            // (allowsHitTesting(false) is set inside ConfettiView itself).
+            ConfettiView(trigger: confettiTrigger, palette: palette)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .allowsHitTesting(false)
 
             if viewModel.isLoading {
                 loadingOverlay(palette: palette)
@@ -61,6 +71,11 @@ struct MainView: View {
         .sheet(isPresented: $showDetails) {
             DetailSheetView(isPresented: $showDetails)
                 .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showFreeSearch) {
+            FreeSearchView()
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         // Restart the reveal animation whenever the target query changes.
@@ -101,6 +116,13 @@ struct MainView: View {
                 argument: newValue ? "Loading pi data" : "Pi data ready"
             )
         }
+        // Fire confetti only when the user explicitly looked up a birthday via the
+        // contact picker and a match was found. The ViewModel increments
+        // birthdayConfettiVersion from inside refreshSelection so the signal is
+        // guaranteed to arrive after the result is ready.
+        .onChange(of: viewModel.birthdayConfettiVersion) { _, _ in
+            confettiTrigger += 1
+        }
     }
 
     // MARK: - Bottom controls
@@ -136,8 +158,8 @@ struct MainView: View {
             .accessibilityLabel("Previous day")
 
             floatingButton(
-                systemName: "slider.horizontal.3",
-                accessibilityLabel: "Date format and settings",
+                systemName: "info.circle",
+                accessibilityLabel: "Date details",
                 size: 56,
                 bounce: detailsBounce
             ) {
@@ -252,8 +274,16 @@ struct MainView: View {
             palette.background
                 .ignoresSafeArea()
                 .opacity(0.85)
-            ProgressView()
-                .tint(palette.mutedInk)
+            // WHY label: on older devices, decoding the 12.6 MB JSON can take
+            // 1–3 seconds. A spinner with no text gives users no cue about what
+            // is happening. "Loading π…" names the work concisely.
+            VStack(spacing: 12) {
+                ProgressView()
+                    .tint(palette.mutedInk)
+                Text("Loading π…")
+                    .font(.caption)
+                    .foregroundStyle(palette.mutedInk)
+            }
         }
         .transition(.opacity)
         .allowsHitTesting(true)

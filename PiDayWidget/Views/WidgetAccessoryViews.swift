@@ -73,6 +73,7 @@ struct WidgetRectangularView: View {
                     ColoredQueryText(
                         query: query,
                         format: format,
+                        date: entry.date,
                         font: .system(.caption, design: .monospaced, weight: .bold),
                         palette: entry.palette
                     )

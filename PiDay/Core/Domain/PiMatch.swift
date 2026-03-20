@@ -11,6 +11,15 @@ struct PiMatchResult: Identifiable, Equatable {
     let excerpt: String?
 
     var id: String { "\(format.rawValue)-\(query)" }
+
+    static func sortByPosition(_ left: PiMatchResult, _ right: PiMatchResult) -> Bool {
+        switch (left.storedPosition, right.storedPosition) {
+        case let (lhs?, rhs?): return lhs < rhs
+        case (_?, nil):        return true
+        case (nil, _?):        return false
+        case (nil, nil):       return left.format.displayName < right.format.displayName
+        }
+    }
 }
 
 // BestPiMatch is always a found result with a confirmed position and excerpt.

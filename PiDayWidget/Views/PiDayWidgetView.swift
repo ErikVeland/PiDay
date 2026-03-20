@@ -65,11 +65,12 @@ struct PiWordmark: View {
 struct ColoredQueryText: View {
     let query: String
     let format: DateFormatOption
+    let date: Date
     let font: Font
     let palette: ThemePalette
 
     var body: some View {
-        let parts = format.queryParts(from: query)
+        let parts = format.queryParts(from: query, date: date)
         return (
             Text(parts.day).foregroundStyle(palette.day)
             + Text(parts.month).foregroundStyle(palette.month)

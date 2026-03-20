@@ -39,13 +39,19 @@ enum SearchFormatPreference: String, CaseIterable, Identifiable {
     var formats: [DateFormatOption] {
         switch self {
         case .international:
-            return [.ddmmyyyy]
+            // WHY both: DDMMYYYY and D/M/YYYY are the same date order — one with
+            // and one without leading zeros. Both are correct international forms,
+            // and a date that isn't found in DDMMYYYY may still appear in D/M/YYYY.
+            return [.ddmmyyyy, .dmyNoLeadingZeros]
         case .american:
             return [.mmddyyyy]
         case .iso8601:
             return [.yyyymmdd]
         case .all:
-            return [.ddmmyyyy, .mmddyyyy, .yyyymmdd]
+            // WHY all five: "Indexed Formats" means every format in the bundled index.
+            // Previously only three were searched, meaning users could be told "not found"
+            // when their date existed in YYMMDD or D/M/YYYY form.
+            return [.ddmmyyyy, .dmyNoLeadingZeros, .mmddyyyy, .yyyymmdd, .yymmdd]
         }
     }
 
@@ -65,13 +71,13 @@ enum SearchFormatPreference: String, CaseIterable, Identifiable {
     var summary: String {
         switch self {
         case .international:
-            return "DDMMYYYY"
+            return "DDMMYYYY or D/M/YYYY"
         case .american:
             return "MMDDYYYY"
         case .iso8601:
             return "YYYYMMDD"
         case .all:
-            return "DDMMYYYY, MMDDYYYY, or YYYYMMDD"
+            return "any indexed format"
         }
     }
 }

@@ -24,10 +24,13 @@ struct PiDayApp: App {
                     }
                 }
                 .fullScreenCover(isPresented: $showOnboarding) {
-                    OnboardingView {
-                        hasSeenOnboarding = true
-                        showOnboarding = false
-                    }
+                    OnboardingView(
+                        onDismiss: {
+                            hasSeenOnboarding = true
+                            showOnboarding = false
+                        },
+                        accentColor: preferences.resolvedPalette.accent
+                    )
                 }
         }
     }

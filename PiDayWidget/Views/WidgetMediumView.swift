@@ -88,7 +88,7 @@ struct WidgetMediumView: View {
     // e.g.:  …41592653 [14][03][2026] 897932384…
     //                   day  mo  year
     private func excerptLine(excerpt: WidgetExcerpt, query: String, format: DateFormatOption) -> some View {
-        let parts = format.queryParts(from: query)
+        let parts = format.queryParts(from: query, date: entry.date)
         let styledText =
             Text(excerpt.before).foregroundStyle(entry.palette.mutedInk.opacity(0.55))
             + Text(parts.day).foregroundStyle(entry.palette.day)

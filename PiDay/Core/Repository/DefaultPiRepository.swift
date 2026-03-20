@@ -13,8 +13,7 @@ final class DefaultPiRepository: PiRepository {
     private let store = PiStore()
     private let liveLookup = PiLiveLookupService()
     private let generator = DateStringGenerator()
-    private var lookupCache: [String: DateLookupSummary] = [:]
-    private var errorCacheTimestamps: [String: Date] = [:]
+    private var cache: [String: (result: DateLookupSummary, cachedAt: Date?)] = [:]
     private let errorCacheTTL: TimeInterval = 60
 
     // WHY nonisolated init: stored properties all have nonisolated inline initializers
@@ -34,20 +33,19 @@ final class DefaultPiRepository: PiRepository {
 
     func loadBundledIndex() async throws {
         try await store.loadInBackground()
-        lookupCache.removeAll()
+        cache.removeAll()
     }
 
     func summary(for date: Date, formats: [DateFormatOption]) async -> DateLookupSummary {
         let cacheKey = cacheKey(for: date, formats: formats)
-        if let cached = lookupCache[cacheKey] {
+        if let entry = cache[cacheKey] {
             // For error entries, only serve from cache if within the TTL window.
-            if cached.errorMessage != nil,
-               let cachedAt = errorCacheTimestamps[cacheKey],
+            if entry.result.errorMessage != nil,
+               let cachedAt = entry.cachedAt,
                Date().timeIntervalSince(cachedAt) >= errorCacheTTL {
-                lookupCache.removeValue(forKey: cacheKey)
-                errorCacheTimestamps.removeValue(forKey: cacheKey)
+                cache.removeValue(forKey: cacheKey)
             } else {
-                return cached
+                return entry.result
             }
         }
 
@@ -73,13 +71,7 @@ final class DefaultPiRepository: PiRepository {
             }
         }
 
-        if result.errorMessage == nil {
-            lookupCache[cacheKey] = result
-            errorCacheTimestamps.removeValue(forKey: cacheKey)
-        } else {
-            lookupCache[cacheKey] = result
-            errorCacheTimestamps[cacheKey] = Date()
-        }
+        cache[cacheKey] = (result, result.errorMessage != nil ? Date() : nil)
         return result
     }
 
@@ -87,22 +79,21 @@ final class DefaultPiRepository: PiRepository {
     // Fast, synchronous — never hits the network.
     func bundledSummary(for date: Date, formats: [DateFormatOption]) -> DateLookupSummary {
         let cacheKey = cacheKey(for: date, formats: formats)
-        if let cached = lookupCache[cacheKey], cached.source == .bundled { return cached }
+        if let entry = cache[cacheKey], entry.result.source == .bundled { return entry.result }
         let result = store.summary(for: date, formats: formats)
-        lookupCache[cacheKey] = result
+        cache[cacheKey] = (result, nil)
         return result
     }
 
     func isInBundledRange(_ date: Date) -> Bool {
-        guard let range = indexedYearRange else { return true }
+        guard let range = indexedYearRange else { return false }
         let cal = Calendar(identifier: .gregorian)
         let year = cal.component(.year, from: date)
         return range.contains(year)
     }
 
     func clearCache() {
-        lookupCache.removeAll()
-        errorCacheTimestamps.removeAll()
+        cache.removeAll()
     }
 
     private func cacheKey(for date: Date, formats: [DateFormatOption]) -> String {

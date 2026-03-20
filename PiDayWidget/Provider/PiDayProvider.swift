@@ -13,7 +13,6 @@ import SwiftUI
 
 struct PiDayProvider: AppIntentTimelineProvider {
     private let appGroupID = "group.academy.glasscode.piday"
-    private let offsetKey = "academy.glasscode.piday.widget.displayDate"
     private let themeKey = "academy.glasscode.piday.pref.theme"
     private let appearanceModeKey = "academy.glasscode.piday.pref.appearanceMode"
     private let searchPreferenceKey = "academy.glasscode.piday.searchPreference"
@@ -117,9 +116,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
     }
 
     private func displayedDate(relativeTo date: Date) -> Date {
-        let defaults = UserDefaults(suiteName: appGroupID) ?? .standard
-        let stored = defaults.object(forKey: offsetKey) as? Date
-        return Calendar.current.startOfDay(for: stored ?? date)
+        Calendar.current.startOfDay(for: date)
     }
 
     private func resolveTheme(from configuration: WidgetThemeIntent) -> AppTheme {
@@ -228,7 +225,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
 }
 
 private extension PiDayProvider {
-    nonisolated(unsafe) static let cachedStore: PiStore? = {
+    static let cachedStore: PiStore? = {
         guard let url = Bundle.main.url(forResource: "pi_2026_2035_index", withExtension: "json") else {
             return nil
         }

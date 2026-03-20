@@ -12,8 +12,7 @@ struct DetailSheetView: View {
     @Binding var isPresented: Bool
     @State private var showSavedDates = false
     @State private var showFreeSearch = false
-    @State private var showPreferences = false
-    private let twoColumnGrid = Array(repeating: GridItem(.flexible(), spacing: 10), count: 2)
+    @State private var navigateToPreferences = false
 
     var body: some View {
         let palette = preferences.resolvedPalette
@@ -43,13 +42,18 @@ struct DetailSheetView: View {
 
                     // Share · Search · Saved — three equal-width actions in one row.
                     // WHY row not stack: these are peer actions, not a ranked list.
-                    HStack(spacing: 10) {
+                    // WHY no separate bookmark button here: the toolbar already has
+                    // a bookmark toggle; a second one in this row was redundant and
+                    // appeared as a blank/icon-only button that confused users.
+                    HStack(spacing: 8) {
                         ShareLink(
                             item: viewModel.shareableCard(palette: palette),
                             preview: SharePreview("PiDay", image: Image(systemName: "chart.bar.doc.horizontal"))
                         ) {
                             Label("Share", systemImage: "square.and.arrow.up")
                                 .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
@@ -59,6 +63,8 @@ struct DetailSheetView: View {
                         Button { showFreeSearch = true } label: {
                             Label("Search", systemImage: "magnifyingglass")
                                 .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
@@ -67,13 +73,23 @@ struct DetailSheetView: View {
                         Button { showSavedDates = true } label: {
                             Label("Saved", systemImage: "bookmark")
                                 .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                         .tint(palette.accent)
                     }
 
-                    appearanceCard(palette: palette)
+                    Button {
+                        navigateToPreferences = true
+                    } label: {
+                        Label("Appearance & Preferences", systemImage: "paintpalette")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(palette.accent)
 
                     // Reminder lives last — it's a one-time setup action, not a
                     // primary interaction, so it shouldn't compete with the result cards.
@@ -101,7 +117,7 @@ struct DetailSheetView: View {
                         } label: {
                             // WHY symbolEffect replace: animates the fill/empty transition
                             // on the bookmark icon so the state change feels intentional.
-                            Image(systemName: viewModel.isCurrentDateSaved ? "bookmark.fill" : "bookmark")
+                            Image(systemName: viewModel.isCurrentDateSaved ? "bookmark.fill" : "bookmark.badge.plus")
                                 .contentTransition(.symbolEffect(.replace.offUp))
                                 .foregroundStyle(viewModel.isCurrentDateSaved ? palette.accent : palette.paneSecondaryText(for: colorScheme))
                         }
@@ -109,7 +125,7 @@ struct DetailSheetView: View {
 
                         // Preferences — opens the full preferences screen
                         Button {
-                            showPreferences = true
+                            navigateToPreferences = true
                         } label: {
                             Image(systemName: "gearshape")
                                 .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
@@ -129,10 +145,10 @@ struct DetailSheetView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $showPreferences) {
-                PreferencesView(isPresented: $showPreferences)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
+            // WHY navigationDestination (not sheet): avoids sheet-within-sheet nesting.
+            // @Environment(\.dismiss) in PreferencesView works for both push and sheet contexts.
+            .navigationDestination(isPresented: $navigateToPreferences) {
+                PreferencesView()
             }
         }
         // WHY preferredColorScheme here: sheets don't always inherit the window-level
@@ -222,128 +238,6 @@ struct DetailSheetView: View {
         .glassCard(cornerRadius: 20, palette: palette)
     }
 
-    private func appearanceCard(palette: ThemePalette) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Appearance")
-                .font(.headline)
-                .foregroundStyle(palette.panePrimaryText(for: colorScheme))
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(AppTheme.allCases) { theme in
-                        ThemeSwatchButton(
-                            theme: theme,
-                            isSelected: preferences.theme == theme,
-                            customAccent: preferences.customAccent
-                        ) {
-                            withAnimation(.spring(response: 0.32, dampingFraction: 0.76)) {
-                                preferences.theme = theme
-                            }
-                            preferences.save()
-                        }
-                    }
-                }
-                .padding(.horizontal, 2)
-                .padding(.vertical, 2)
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Appearance")
-                    .font(.subheadline)
-                    .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-
-                LazyVGrid(columns: twoColumnGrid, spacing: 10) {
-                    ForEach(AppAppearanceMode.allCases) { mode in
-                        AppearanceModeButton(
-                            mode: mode,
-                            isSelected: preferences.appearanceMode == mode
-                        ) {
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.78)) {
-                                preferences.appearanceMode = mode
-                            }
-                            preferences.save()
-                        }
-                    }
-                }
-            }
-
-            if preferences.theme == .custom {
-                ColorPicker(
-                    "Accent Colour",
-                    selection: Binding(
-                        get: { preferences.customAccent },
-                        set: { preferences.customAccent = $0; preferences.save() }
-                    ),
-                    supportsOpacity: false
-                )
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Font Style")
-                    .font(.subheadline)
-                    .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-
-                LazyVGrid(columns: twoColumnGrid, spacing: 10) {
-                    ForEach(AppFontStyle.allCases) { style in
-                        FontStyleButton(
-                            style: style,
-                            isSelected: preferences.fontStyle == style
-                        ) {
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.78)) {
-                                preferences.fontStyle = style
-                            }
-                            preferences.save()
-                        }
-                    }
-                }
-            }
-
-            FontWeightSliderRow(
-                selection: preferences.fontWeight,
-                onChange: {
-                    preferences.fontWeight = $0
-                    preferences.save()
-                },
-                previewFont: { size, weight in
-                    preferences.fontStyle.font(size: size, weight: weight)
-                }
-            )
-
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Digit Size")
-                    .font(.subheadline)
-                    .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-
-                HStack(spacing: 10) {
-                    ForEach(DigitSize.allCases) { size in
-                        DigitSizeButton(
-                            size: size,
-                            isSelected: preferences.digitSize == size
-                        ) {
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.78)) {
-                                preferences.digitSize = size
-                            }
-                            preferences.save()
-                        }
-                    }
-                    Spacer(minLength: 0)
-                }
-            }
-
-            DigitPreviewCard(
-                fontStyle: preferences.fontStyle,
-                fontWeight: preferences.fontWeight,
-                digitSize: preferences.digitSize,
-                palette: palette
-            )
-
-            Text("The full Preferences screen still includes colour-coding details and app info.")
-                .font(.caption)
-                .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-        }
-        .compactSectionCard()
-    }
-
     private func reminderCard(palette: ThemePalette) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Pi Day Reminder")
@@ -363,7 +257,7 @@ struct DetailSheetView: View {
                         }
                     } else {
                         let newState = await NotificationService.requestAndSchedulePiDay()
-                    viewModel.notificationAuthState = newState
+                        viewModel.notificationAuthState = newState
                     }
                 }
             } label: {

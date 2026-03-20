@@ -55,8 +55,8 @@ enum NotificationService {
         if pending.contains(where: { $0.identifier == notificationID }) { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Happy Pi Day!"
-        content.body = "Today is 14/03. See where it falls in the digits of π."
+        content.title = "Happy Pi Day! 🥧"
+        content.body = "It's March 14 — Pi Day. Open PiDay to find your place in π."
         content.sound = .default
 
         // March 14 at 9:14 AM — π day at π time.

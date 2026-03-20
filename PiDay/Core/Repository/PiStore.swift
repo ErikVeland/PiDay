@@ -15,8 +15,22 @@ enum PiStoreError: LocalizedError {
     }
 }
 
-final class PiStore: @unchecked Sendable {
-    private(set) var payload: PiIndexPayload?
+final class PiStore: Sendable {
+    // WHY nonisolated(unsafe): payload is mutable, which normally violates Sendable.
+    //
+    // Main app: DefaultPiRepository is @MainActor — all reads and the single write
+    // (the result of `loadInBackground()`) happen on the main actor. No concurrent access.
+    //
+    // Widget: PiDayProvider.cachedStore is a `static let` whose initializer closure
+    // calls `load()` synchronously and returns the fully-populated store. Swift's
+    // `static let` uses dispatch_once semantics — the closure runs to completion
+    // before any caller can access the result. After that point payload is only read,
+    // never written. No concurrent write can occur.
+    //
+    // In both cases the access pattern is: one write, then many reads. nonisolated(unsafe)
+    // asserts that we are managing this invariant manually. Using @unchecked Sendable at
+    // the class level would be broader and mask other potential issues.
+    nonisolated(unsafe) private(set) var payload: PiIndexPayload?
     private let generator = DateStringGenerator()
 
     // Synchronous load — useful for tests with a known URL.
@@ -57,7 +71,7 @@ final class PiStore: @unchecked Sendable {
             }
             return PiMatchResult(query: query, format: format, found: false, storedPosition: nil, excerpt: nil)
         }
-        .sorted(by: Self.sortMatches)
+        .sorted(by: PiMatchResult.sortByPosition)
 
         let bestMatch = matches
             .compactMap { result -> BestPiMatch? in
@@ -75,12 +89,4 @@ final class PiStore: @unchecked Sendable {
         )
     }
 
-    private static func sortMatches(_ left: PiMatchResult, _ right: PiMatchResult) -> Bool {
-        switch (left.storedPosition, right.storedPosition) {
-        case let (lhs?, rhs?): return lhs < rhs
-        case (_?, nil): return true
-        case (nil, _?): return false
-        case (nil, nil): return left.format.displayName < right.format.displayName
-        }
-    }
 }

@@ -36,19 +36,18 @@ struct DaySummary: Identifiable, Equatable {
         return convention.displayPosition(for: bestStoredPosition)
     }
 
-    func heatLevel(using convention: IndexingConvention) -> PiHeatLevel {
-        guard let position = displayedBestPosition(using: convention) else {
-            return .none
-        }
+    // WHY bestStoredPosition (not displayedBestPosition): heat levels reflect the
+    // true position in pi. The display convention (0-based vs 1-based) is a UI
+    // labeling choice that should NOT shift which heat bucket a date falls into.
+    // A date at stored position 1,000 is always "warm" regardless of whether the
+    // user prefers to call it digit 999 or digit 1,000.
+    var heatLevel: PiHeatLevel {
+        guard let position = bestStoredPosition else { return .none }
         switch position {
-        case ..<1_000:
-            return .hot
-        case ..<100_000:
-            return .warm
-        case ..<10_000_000:
-            return .cool
-        default:
-            return .faint
+        case ..<1_000:     return .hot
+        case ..<100_000:   return .warm
+        case ..<10_000_000: return .cool
+        default:           return .faint
         }
     }
 }

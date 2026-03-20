@@ -1,6 +1,14 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+// MARK: - Render error
+
+private struct ShareCardRenderError: LocalizedError {
+    var errorDescription: String? {
+        "Unable to generate the share card. Please try again."
+    }
+}
+
 // MARK: - Transferable wrapper
 
 // WHY a custom Transferable instead of sharing plain text:
@@ -46,10 +54,16 @@ struct ShareableCard: Transferable {
         // exportedContentType: .png tells the share sheet this is an image.
         // The system uses this to decide which apps appear in the share sheet
         // (e.g. Photos, Instagram, Messages all accept .png).
+        // WHY throw instead of returning Data(): returning empty Data() causes
+        // the share sheet to open with a broken/invisible attachment and no
+        // error message. Throwing fails the transfer cleanly and iOS surfaces
+        // an alert to the user, which is far better than silent corruption.
         DataRepresentation(exportedContentType: .png) { card in
-            await MainActor.run {
-                card.render()?.pngData() ?? Data()
+            let image = await MainActor.run { card.render() }
+            guard let data = image?.pngData() else {
+                throw ShareCardRenderError()
             }
+            return data
         }
     }
 }
@@ -93,7 +107,7 @@ struct ShareCardView: View {
                 Spacer()
 
                 // Footer
-                Text("Find your date in π · piday.app")
+                Text("Find your date in π")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle(palette.mutedInk.opacity(0.5))
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -163,7 +177,7 @@ struct ShareCardView: View {
     }
 
     private func coloredQueryText(_ query: String, format: DateFormatOption) -> Text {
-        let parts = format.queryParts(from: query)
+        let parts = format.queryParts(from: query, date: date)
         return Text(parts.day).foregroundStyle(palette.day)
             + Text(parts.month).foregroundStyle(palette.month)
             + Text(parts.year).foregroundStyle(palette.year)
@@ -186,7 +200,7 @@ struct ShareCardView: View {
             return ("…" + String(excerpt[bStart..<qIdx]), String(excerpt[qEnd..<aEnd]) + "…")
         }()
 
-        let parts = format.queryParts(from: match.query)
+        let parts = format.queryParts(from: match.query, date: date)
         return (
             Text(result.before).foregroundStyle(palette.mutedInk.opacity(0.45))
             + Text(parts.day).foregroundStyle(palette.day)
