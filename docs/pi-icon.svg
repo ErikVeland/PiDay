@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" fill="white"/>
+  <text
+    x="512"
+    y="780"
+    font-family="Didot, 'Bodoni MT', 'Palatino Linotype', Palatino, Georgia, serif"
+    font-size="820"
+    font-weight="400"
+    text-anchor="middle"
+    fill="black"
+  >π</text>
+</svg>
