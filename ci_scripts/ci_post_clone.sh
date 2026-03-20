@@ -12,9 +12,12 @@ echo "--- Installing XcodeGen ---"
 brew install xcodegen
 
 echo "--- Generating Xcode project ---"
-# WHY CI_WORKSPACE: Xcode Cloud sets this env var to the repo root.
-# xcodegen must run from the directory containing project.yml.
-cd "$CI_WORKSPACE"
+# WHY dirname navigation: CI_WORKSPACE may not be set when ci_post_clone.sh
+# runs. Navigating relative to the script's own path is always reliable —
+# ci_scripts/ is one level below the repo root where project.yml lives.
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
+echo "Working directory: $REPO_ROOT"
 xcodegen generate
 
 echo "--- Done ---"
