@@ -35,7 +35,7 @@ targets:
       # Lives at the project root alongside (not inside) Assets.xcassets.
       # Xcode processes it at build time; AppIcon.appiconset provides the
       # static fallback for iOS < 26.
-      - path: Icon.icon
+      - path: AppIcon.icon
         buildPhase: resources
     # The widget extension must be listed as a dependency of the app so
     # XcodeGen embeds it inside the app bundle automatically.
@@ -47,7 +47,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday
         PRODUCT_NAME: PiDay
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        # Icon.icon at project root provides the iOS 26 Liquid Glass adaptive icon.
+        # AppIcon.icon at project root provides the iOS 26 Liquid Glass adaptive icon.
         # AppIcon.appiconset in Assets.xcassets is the static fallback for iOS < 26.
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
