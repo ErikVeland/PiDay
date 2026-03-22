@@ -28,7 +28,7 @@ server {
     }
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -62,8 +62,9 @@ WorkingDirectory=/var/www/piday.glasscode.academy/app
 ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=3
-Environment=PORT=3000
-Environment=HOSTNAME=0.0.0.0
+Environment=NODE_ENV=production
+Environment=PORT=3001
+Environment=HOSTNAME=127.0.0.1
 
 [Install]
 WantedBy=multi-user.target
