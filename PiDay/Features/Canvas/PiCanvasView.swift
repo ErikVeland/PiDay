@@ -18,6 +18,11 @@ struct PiCanvasView: View {
     // @State structs would trigger that warning because assigning a new struct
     // value IS a state change from SwiftUI's perspective.
     @State private var canvasCache = CanvasCache()
+    // WHY track reveal start time: Canvas draws imperatively — there are no per-node
+    // SwiftUI animation states. We replicate the cascade drop-in by recording when
+    // revealSequence first became true, then computing each character's spring progress
+    // from elapsed time in the draw closure, matching the original per-item delays.
+    @State private var revealStartDate: Date? = nil
 
     var body: some View {
         GeometryReader { geometry in
@@ -33,6 +38,11 @@ struct PiCanvasView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Pi digit canvas. \(viewModel.headerStatusText)")
         .accessibilityHint("Swipe left or right to navigate days. Tap the settings button below to open details.")
+        // Track when the cascade reveal begins so the Canvas can compute time-based
+        // spring progress for each character without per-node SwiftUI animation state.
+        .onChange(of: revealSequence) { _, newValue in
+            revealStartDate = newValue ? Date() : nil
+        }
     }
 
     private func piCanvas(in size: CGSize) -> some View {
@@ -155,39 +165,196 @@ struct PiCanvasView: View {
             )
     }
 
-    // WHY per-character rendering for Matrix: column-based cascade (each column of
-    // digits drops independently from above) mirrors the Matrix code-rain aesthetic.
-    // Text concatenation only supports per-line animation; individual Text views let
-    // each character carry its own spring delay and ongoing phosphor rain brightness.
+    // WHY Canvas instead of VStack/HStack/ForEach: the previous renderer created
+    // ~600 SwiftUI Text nodes × 6 blur/shadow layers each = ~3,600 nodes that
+    // SwiftUI must diff, layout, and rasterise every 24 fps frame. Even with
+    // drawingGroup() collapsing the final composite, SwiftUI still maintains every
+    // node in its view tree and issues one GPU render-to-texture per blur call.
+    //
+    // Canvas draws imperatively — zero view nodes, zero diffing. All ~600 characters
+    // are painted in two passes inside a single GPU texture: (1) a blurred glow layer
+    // where addFilter(.blur) applies ONE blur operation over every character at once,
+    // then (2) a sharp pass for the crisp foreground glyphs. This collapses what was
+    // ~2,400 per-character GPU blur operations down to 1 regardless of char count.
     private func matrixBodyText(for layout: PiBodyLayout, columns: Int, bodyWidth: CGFloat, fontSize: CGFloat, palette: ThemePalette, date: Date) -> some View {
         let time = date.timeIntervalSinceReferenceDate
-        let lineSpacing = fontSize * 0.34
-        let rows = layout.lines.count
+        let lineH  = fontSize * 1.48   // matches PiTextMetrics.lineHeight
+        let rows   = layout.lines.count
+        let charWidth = bodyWidth / CGFloat(max(1, columns))
 
-        // WHY drawingGroup: each character renders as 6 stacked Text views with
-        // .blur() and .shadow() — two of the most GPU-intensive SwiftUI modifiers.
-        // At ~600 characters × 24 fps that's thousands of individual Metal compositing
-        // passes per second. drawingGroup() rasterises the entire VStack into one
-        // offscreen Metal texture first, then composites it once — collapsing those
-        // passes into a single GPU operation regardless of how many layers are inside.
-        return VStack(alignment: .leading, spacing: lineSpacing) {
-            ForEach(Array(layout.lines.enumerated()), id: \.offset) { rowIdx, line in
-                HStack(spacing: 0) {
-                    ForEach(matrixCharData(for: line, palette: palette)) { item in
-                        matrixChar(
-                            item.char, color: item.color, isHighlighted: item.isHighlighted,
-                            row: rowIdx, col: item.id,
-                            totalRows: rows, totalCols: columns,
-                            fontSize: fontSize, time: time
-                        )
-                    }
+        // Pre-build char grid once per frame — same colour logic as before.
+        let charGrid: [[MatrixCharItem]] = layout.lines.map { matrixCharData(for: $0, palette: palette) }
+
+        // Reveal timing: negative = not yet revealed, large = fully settled.
+        // revealStartDate is set in onChange(of: revealSequence) on the parent view.
+        let elapsedReveal: Double = revealSequence
+            ? (revealStartDate.map { max(0, time - $0.timeIntervalSinceReferenceDate) } ?? 9_999)
+            : -1
+
+        let skipAnim = reduceMotion
+
+        return Canvas(opaque: false, colorMode: .linear, rendersAsynchronously: false) { ctx, _ in
+            // Pre-compute all char states in one sweep to avoid doing it twice.
+            var infos: [MatrixCanvasCharInfo] = []
+            infos.reserveCapacity(rows * columns)
+            for rowIdx in 0..<rows {
+                for item in charGrid[rowIdx] {
+                    let info = computeMatrixChar(
+                        item: item, row: rowIdx, col: item.id,
+                        totalRows: rows, totalCols: columns,
+                        fontSize: fontSize, charWidth: charWidth, lineH: lineH,
+                        time: time, elapsedReveal: elapsedReveal, skipAnim: skipAnim
+                    )
+                    if info.visible { infos.append(info) }
                 }
             }
+
+            // ── Pass 1: blurred phosphor glow ──────────────────────────────
+            // addFilter(.blur) applies a single GPU blur to EVERYTHING drawn in
+            // this layer — one operation for all ~600 characters combined, vs the
+            // old approach of one blur per character per layer (~2,400+ calls/frame).
+            ctx.drawLayer { gc in
+                gc.addFilter(.blur(radius: 5.5))
+                for info in infos where info.glowOpacity > 0.01 {
+                    let p = CGPoint(x: info.x + info.lateralJitter, y: info.y)
+                    // Three upward ghost offsets recreate phosphor decay trail.
+                    gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity * 0.32)),
+                            at: p.applying(.init(translationX: 0, y: -fontSize * 1.1)), anchor: .topLeading)
+                    gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity * 0.52)),
+                            at: p.applying(.init(translationX: 0, y: -fontSize * 0.55)), anchor: .topLeading)
+                    gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity)),
+                            at: p, anchor: .topLeading)
+                }
+            }
+
+            // ── Pass 2: sharp foreground characters ────────────────────────
+            for info in infos where info.sharpOpacity > 0.01 {
+                ctx.draw(
+                    Text(String(info.char)).foregroundStyle(info.color.opacity(info.sharpOpacity)),
+                    at: CGPoint(x: info.x + info.lateralJitter, y: info.y),
+                    anchor: .topLeading
+                )
+            }
         }
-        .drawingGroup()
         .font(.system(size: fontSize, weight: preferences.fontWeight.fontWeight, design: .monospaced))
         .allowsHitTesting(false)
-        .frame(width: bodyWidth, alignment: .leading)
+        .frame(width: bodyWidth, height: CGFloat(rows) * lineH, alignment: .topLeading)
+    }
+
+    // Computes the visual state for one matrix character at a given (row, col) for
+    // the current time. Pure function — no side effects, safe to call from Canvas draw.
+    private func computeMatrixChar(
+        item: MatrixCharItem, row: Int, col: Int,
+        totalRows: Int, totalCols: Int,
+        fontSize: CGFloat, charWidth: CGFloat, lineH: CGFloat,
+        time: TimeInterval, elapsedReveal: Double, skipAnim: Bool
+    ) -> MatrixCanvasCharInfo {
+        let baseSeed    = matrixNoise(col, row)
+        let columnSeed  = matrixColumnNoise(col)
+        let streakSeed  = matrixNoise(col * 7 + row * 3, row * 11 + col)
+
+        // ── Rain physics ─────────────────────────────────────────────────
+        let streamDuration = 4.4 + columnSeed * 3.4 + Double((col + row) % 4) * 0.22
+        let phase      = ((time + baseSeed * streamDuration).truncatingRemainder(dividingBy: streamDuration)) / streamDuration
+        let easedPhase = phase * phase * (3.0 - 2.0 * phase)
+        let spawnRows  = 5.0 + columnSeed * 8.0
+        let trailRows  = (item.isHighlighted ? 9.0 : 13.0) + streakSeed * 7.0
+        let headPos    = easedPhase * (Double(totalRows) + spawnRows + trailRows) - spawnRows
+        let dist       = headPos - Double(row)
+
+        let arrivalProgress = max(0.0, min(1.0, (dist + 2.2 + columnSeed * 2.8) / (2.2 + columnSeed * 2.8)))
+        let trailProgress   = max(0.0, min(1.0, 1.0 - dist / trailRows))
+
+        // ── Brightness ───────────────────────────────────────────────────
+        // WHY highlighted chars bypass rain-head logic: date digits sit at a fixed
+        // settled position, so letting the rain head spike their brightness to 2.2
+        // would cause jarring flashes. Instead they always use the ambient flicker
+        // formula — a gentle sine-based phosphor ebb and flow — while ambient digits
+        // keep the full head/trail/decay cycle.
+        let flickerRate = 0.9 + columnSeed * 1.8
+        let flicker = (sin(time * flickerRate + baseSeed * 9.0 + Double(row) * (0.21 + columnSeed * 0.12)) + 1) * 0.5
+
+        let brightness: Double
+        let glowStrength: Double
+        if item.isHighlighted {
+            brightness   = 0.72 + flicker * 0.22
+            glowStrength = 0.28 + flicker * 0.38
+        } else if dist > -0.4 && dist <= 0.2 {
+            brightness   = 1.85 + columnSeed * 0.40
+            glowStrength = 0.8  + columnSeed * 0.2
+        } else if dist > 0.2 && dist < trailRows {
+            let t     = (dist - 0.2) / (trailRows - 0.2)
+            let decay = pow(1.0 - t, 0.55)
+            brightness   = (1.08 + columnSeed * 0.18) * decay
+            glowStrength = decay * (0.5 + columnSeed * 0.3)
+        } else {
+            brightness   = 0.14 + flicker * (0.06 + streakSeed * 0.03)
+            glowStrength = flicker * 0.1
+        }
+
+        let phosphorOpacity = item.isHighlighted
+            ? 0.96
+            : min(0.90, 0.18 + trailProgress * 0.70)
+
+        // ── Reveal cascade (time-based spring approximation) ─────────────
+        // WHY ease-out cubic instead of SwiftUI spring: Canvas has no per-node
+        // animation state. We replicate the cascadeDelay + spring(0.30, 0.70)
+        // with a simple ease-out cubic keyed on elapsed time since revealStartDate.
+        let cascadeDelay = skipAnim ? 0.0
+            : (Double(col) / Double(max(1, totalCols)) * 0.42)
+            +  columnSeed * 0.22
+            +  Double(row) * (0.001 + columnSeed * 0.003)
+
+        let dropHeight = fontSize * CGFloat(spawnRows * 0.42)
+        // WHY highlighted chars settle to 0 instead of -glideOffset: glideOffset is
+        // derived from arrivalProgress which changes every frame as the rain head
+        // cycles. Using it for highlighted chars would cause the date digits to drift
+        // up/down continuously after landing. Lock them at their grid row instead.
+        let settledOffset: CGFloat = item.isHighlighted
+            ? 0
+            : -CGFloat((1.0 - arrivalProgress) * (1.0 - arrivalProgress))
+                * fontSize * CGFloat(1.7 + columnSeed * 3.2)
+
+        let revealOpacity: Double
+        let vertYOffset: CGFloat
+
+        if elapsedReveal < 0 {
+            // Not yet revealed — parked above the visible area.
+            revealOpacity = 0
+            vertYOffset   = -dropHeight
+        } else if skipAnim {
+            revealOpacity = 1
+            vertYOffset   = settledOffset
+        } else {
+            let charElapsed = max(0.0, elapsedReveal - cascadeDelay)
+            let t = min(1.0, charElapsed / 0.42)
+            let sp = 1.0 - pow(1.0 - t, 3.0)  // ease-out cubic ≈ spring(0.30, 0.70)
+            revealOpacity = sp
+            // Lerp from "parked above" → settled position (0 for date, physics for ambient).
+            vertYOffset = CGFloat(1.0 - sp) * (-dropHeight) + CGFloat(sp) * settledOffset
+        }
+
+        // ── Character mutation (head of rain glitches between glyphs) ────
+        let headWindow   = dist > -0.18 && dist < trailRows * 0.28
+        let displayChar  = matrixDisplayedCharacter(
+            base: item.char, isHighlighted: item.isHighlighted,
+            row: row, col: col, time: time, shouldMutate: headWindow
+        )
+
+        let lateralJitter: CGFloat = item.isHighlighted
+            ? 0
+            : CGFloat((matrixNoise(col * 13, row * 5) - 0.5) * 0.20)
+
+        return MatrixCanvasCharInfo(
+            char:         displayChar,
+            color:        item.color,
+            x:            CGFloat(col) * charWidth,
+            y:            CGFloat(row) * lineH + vertYOffset,
+            sharpOpacity: min(1.0, brightness) * phosphorOpacity * revealOpacity,
+            glowOpacity:  glowStrength          * phosphorOpacity * revealOpacity,
+            lateralJitter: lateralJitter,
+            visible:      revealOpacity > 0.005
+        )
     }
 
     private func matrixCharData(for line: PiContextLine, palette: ThemePalette) -> [MatrixCharItem] {
@@ -212,131 +379,6 @@ struct PiCanvasView: View {
         return items
     }
 
-    private func matrixChar(
-        _ char: Character,
-        color: Color,
-        isHighlighted: Bool,
-        row: Int, col: Int,
-        totalRows: Int, totalCols: Int,
-        fontSize: CGFloat,
-        time: TimeInterval
-    ) -> some View {
-        // Use stream-style timing so glyphs travel as coherent top-down rain
-        // rather than all columns pulsing with the same cadence.
-        let baseSeed = matrixNoise(col, row)
-        let columnSeed = matrixColumnNoise(col)
-        let streakSeed = matrixNoise(col * 7 + row * 3, row * 11 + col)
-
-        let cascadeDelay = reduceMotion
-            ? 0.0
-            : (Double(col) / Double(max(1, totalCols)) * 0.42)
-            + columnSeed * 0.22
-            + Double(row) * (0.001 + columnSeed * 0.003)
-
-        let streamDuration = 4.4 + columnSeed * 3.4 + Double((col + row) % 4) * 0.22
-        let cycleOffset = baseSeed * streamDuration
-        let phase = ((time + cycleOffset).truncatingRemainder(dividingBy: streamDuration)) / streamDuration
-        let easedPhase = phase * phase * (3.0 - 2.0 * phase)
-        let spawnRows = 5.0 + columnSeed * 8.0
-        let trailRows = (isHighlighted ? 9.0 : 13.0) + streakSeed * 7.0
-        let headTravel = Double(totalRows) + spawnRows + trailRows
-        let headPos = easedPhase * headTravel - spawnRows
-        let dist = headPos - Double(row)
-        let arrivalWindow = 2.2 + columnSeed * 2.8
-        let arrivalProgress = max(0.0, min(1.0, (dist + arrivalWindow) / arrivalWindow))
-        let glideOffsetY = CGFloat((1.0 - arrivalProgress) * (1.0 - arrivalProgress)) * fontSize * CGFloat(1.7 + columnSeed * 3.2)
-        let trailProgress = max(0.0, min(1.0, 1.0 - (dist / trailRows)))
-        let trailLen = trailRows
-        let brightness: Double
-        let glowRadius: CGFloat
-
-        if dist > -0.4 && dist <= 0.2 {
-            brightness = isHighlighted ? 2.2 : 1.85 + columnSeed * 0.40
-            glowRadius = isHighlighted ? 16 : CGFloat(10 + columnSeed * 7)
-        } else if dist > 0.2 && dist < trailLen {
-            let t = (dist - 0.2) / (trailLen - 0.2)
-            let phosphorDecay = pow(1.0 - t, isHighlighted ? 0.42 : 0.55)
-            brightness = (isHighlighted ? 1.45 : 1.08 + columnSeed * 0.18) * phosphorDecay
-            glowRadius = CGFloat(max(0, phosphorDecay * (isHighlighted ? 11.0 : (5.0 + columnSeed * 4.5))))
-        } else {
-            let flickerRate = 0.9 + columnSeed * 1.8
-            let flicker = (sin(time * flickerRate + baseSeed * 9.0 + Double(row) * (0.21 + columnSeed * 0.12)) + 1) * 0.5
-            brightness = isHighlighted
-                ? 0.58 + flicker * 0.16
-                : 0.14 + flicker * (0.06 + streakSeed * 0.03)
-            glowRadius = isHighlighted ? CGFloat(flicker * 5.2) : CGFloat(flicker * (1.6 + columnSeed * 2.0))
-        }
-
-        let dropHeight = fontSize * CGFloat(spawnRows * 0.42)
-        let lateralJitter = isHighlighted
-            ? 0
-            : CGFloat((matrixNoise(col * 13, row * 5) - 0.5) * 0.20)
-        let headWindow = dist > -0.18 && dist < trailLen * 0.28
-        let displayedChar = matrixDisplayedCharacter(
-            base: char,
-            isHighlighted: isHighlighted,
-            row: row,
-            col: col,
-            time: time,
-            shouldMutate: headWindow
-        )
-
-        let phosphorColor = isHighlighted
-            ? color.opacity(0.96)
-            : color.opacity(min(0.90, 0.18 + trailProgress * 0.70))
-        let trailGhostOpacity = max(0.0, min(0.78, trailProgress * (isHighlighted ? 0.50 : 0.72)))
-        let farGhostOpacity = max(0.0, min(0.48, trailProgress * (isHighlighted ? 0.28 : 0.40)))
-        let verticalSettledOffset = revealSequence ? -glideOffsetY : -dropHeight
-        let nearGhostOffset = verticalSettledOffset - fontSize * CGFloat(0.42 + columnSeed * 0.26)
-        let midGhostOffset = verticalSettledOffset - fontSize * CGFloat(0.82 + streakSeed * 0.34)
-        let farGhostOffset = verticalSettledOffset - fontSize * CGFloat(1.24 + streakSeed * 0.52)
-        let leadBloomOpacity = max(0.0, min(0.68, (brightness - 0.7) * 0.48))
-        let wakeOpacity = max(0.0, min(0.22, trailProgress * 0.18))
-
-        return ZStack {
-            Text(String(displayedChar))
-                .foregroundStyle(phosphorColor.opacity(wakeOpacity))
-                .blur(radius: 3.2)
-                .shadow(color: phosphorColor.opacity(wakeOpacity), radius: glowRadius * 2.1)
-                .offset(x: lateralJitter, y: farGhostOffset - fontSize * 0.55)
-
-            Text(String(displayedChar))
-                .foregroundStyle(phosphorColor.opacity(farGhostOpacity))
-                .blur(radius: isHighlighted ? 1.7 : 2.3)
-                .shadow(color: phosphorColor.opacity(farGhostOpacity * 0.85), radius: glowRadius * 1.8)
-                .offset(x: lateralJitter, y: farGhostOffset)
-
-            Text(String(displayedChar))
-                .foregroundStyle(phosphorColor.opacity(trailGhostOpacity * 0.7))
-                .blur(radius: isHighlighted ? 1.0 : 1.5)
-                .shadow(color: phosphorColor.opacity(trailGhostOpacity * 0.72), radius: glowRadius * 1.35)
-                .offset(x: lateralJitter, y: midGhostOffset)
-
-            Text(String(displayedChar))
-                .foregroundStyle(phosphorColor.opacity(trailGhostOpacity))
-                .blur(radius: isHighlighted ? 0.8 : 1.2)
-                .shadow(color: phosphorColor.opacity(trailGhostOpacity), radius: glowRadius * 1.15)
-                .offset(x: lateralJitter, y: nearGhostOffset)
-
-            Text(String(displayedChar))
-                .foregroundStyle(Color.white.opacity(leadBloomOpacity))
-                .blur(radius: glowRadius * 0.16)
-                .offset(x: lateralJitter, y: verticalSettledOffset)
-
-            Text(String(displayedChar))
-                .foregroundStyle(color.opacity(min(brightness, 1.0)))
-                .brightness(max(0, brightness - 1.0) * 0.55)
-                .shadow(color: color.opacity(min(brightness * 0.80, 0.98)), radius: glowRadius)
-                .offset(x: lateralJitter, y: verticalSettledOffset)
-        }
-        .opacity(revealSequence ? 1 : 0)
-        .animation(
-            reduceMotion
-                ? .none
-                : .spring(response: 0.30, dampingFraction: 0.70).delay(cascadeDelay),
-            value: revealSequence
-        )
-    }
 
     private func composedBodyText(from layout: PiBodyLayout, palette: ThemePalette) -> Text {
         layout.lines.enumerated().reduce(Text("")) { partial, pair in
@@ -695,6 +737,19 @@ private struct MatrixCharItem: Identifiable {
     let char: Character
     let color: Color
     let isHighlighted: Bool
+}
+
+// Fully resolved render state for one Canvas character, computed once per frame
+// in computeMatrixChar and consumed by both the glow pass and sharp pass.
+private struct MatrixCanvasCharInfo {
+    let char: Character
+    let color: Color
+    let x: CGFloat
+    let y: CGFloat
+    let sharpOpacity: Double   // opacity for the crisp foreground pass
+    let glowOpacity: Double    // opacity for the blurred phosphor glow pass
+    let lateralJitter: CGFloat
+    let visible: Bool          // false when fully transparent (skip both passes)
 }
 
 // ── AnimatedCounterView ───────────────────────────────────────────────────────

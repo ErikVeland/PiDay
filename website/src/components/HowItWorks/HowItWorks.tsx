@@ -25,7 +25,7 @@ export default function HowItWorks() {
             </div>
             <h3 className={styles.stepTitle}>Pick your date</h3>
             <p className={styles.stepBody}>
-              Pick any birthday, anniversary, or date that matters. PiDay searches across five billion digits of π in every date format simultaneously.
+              Open to today, or pick any birthday, anniversary, or date that matters. PiDay searches across five billion digits of π in every date format simultaneously.
             </p>
           </div>
 

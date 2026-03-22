@@ -64,17 +64,27 @@ struct MainView: View {
             }
         }
         .sheet(isPresented: $showCalendar) {
+            // WHY explicit .environment: @Observable objects don't always propagate
+            // through sheet closures automatically on all OS versions (known SwiftUI bug
+            // on macOS/Mac Catalyst and iOS 26 betas). Re-injecting the same references
+            // ensures the child view hierarchy can read them via @Environment.
             CalendarSheetView(isPresented: $showCalendar)
+                .environment(viewModel)
+                .environment(preferences)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showDetails) {
             DetailSheetView(isPresented: $showDetails)
+                .environment(viewModel)
+                .environment(preferences)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showFreeSearch) {
             FreeSearchView()
+                .environment(viewModel)
+                .environment(preferences)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }

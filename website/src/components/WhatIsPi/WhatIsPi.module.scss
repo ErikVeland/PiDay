@@ -1,0 +1,138 @@
+.section {
+  background: var(--color-bg-white);
+  padding: var(--space-12) var(--space-6);
+  border-top: 1px solid var(--color-border);
+}
+
+.inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  margin-bottom: var(--space-6);
+
+  &::after {
+    content: '';
+    display: block;
+    flex: 1;
+    margin-left: 16px;
+    border-top: 1px solid var(--color-border);
+  }
+}
+
+/* Large digit display — the visual centrepiece above the prose */
+.digitDisplay {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: var(--space-10);
+  overflow: hidden;
+}
+
+.piSymbol {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 3.5vw, 32px);
+  font-weight: 400;
+  color: var(--color-ink-faint);
+  letter-spacing: 4px;
+  margin-right: 12px;
+  white-space: nowrap;
+}
+
+.piDigits {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 3.5vw, 32px);
+  font-weight: 700;
+  color: var(--color-ink);
+  letter-spacing: 3px;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.ellipsis {
+  font-family: var(--font-mono);
+  font-size: clamp(20px, 3.5vw, 32px);
+  color: var(--color-ink-faint);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* Two-column prose */
+.prose {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  margin-bottom: var(--space-10);
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.headline {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-ink);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--color-ink-muted);
+  line-height: 1.8;
+
+  em {
+    font-style: italic;
+    color: var(--color-ink);
+  }
+}
+
+/* Pull quote */
+.pullQuote {
+  border-left: 2px solid var(--color-ink);
+  padding-left: var(--space-4);
+  margin: 0;
+}
+
+.pullQuoteText {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-ink);
+  line-height: 1.5;
+  max-width: 640px;
+}
+
+/* Responsive — collapse to single column on narrow viewports */
+@media (max-width: 680px) {
+  .prose {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .piDigits,
+  .piSymbol,
+  .ellipsis {
+    font-size: 16px;
+  }
+
+  .pullQuoteText {
+    font-size: 18px;
+  }
+}

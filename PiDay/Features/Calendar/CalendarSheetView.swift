@@ -65,6 +65,8 @@ struct CalendarSheetView: View {
                 viewModel.selectBirthday(date)
                 isPresented = false
             }
+            .environment(viewModel)
+            .environment(preferences)
             .presentationDetents([.medium])
         }
     }

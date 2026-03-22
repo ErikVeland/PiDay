@@ -29,6 +29,20 @@ struct BestPiMatch: Equatable {
     let query: String
     let storedPosition: Int
     let excerpt: String
+
+    // WHY: When multiple formats match, any zero-padded format (e.g. DDMMYYYY "03052026")
+    // is preferred over D/M/YYYY without leading zeros (e.g. "352026"), even if the
+    // no-leading-zeros sequence appears earlier in pi. Shorter strings match more
+    // frequently in any digit stream simply because there are more candidate windows;
+    // users recognise a padded date string as their birthday — a bare "352026" looks
+    // like a bug (leading zeros "dropped"). Only fall back to dmyNoLeadingZeros when
+    // no padded format produced a match.
+    static func preferringPadded(_ lhs: BestPiMatch, _ rhs: BestPiMatch) -> Bool {
+        let lhsPadded = lhs.format != .dmyNoLeadingZeros
+        let rhsPadded = rhs.format != .dmyNoLeadingZeros
+        if lhsPadded != rhsPadded { return lhsPadded }
+        return lhs.storedPosition < rhs.storedPosition
+    }
 }
 
 // Where the result came from — bundled JSON or the live API.

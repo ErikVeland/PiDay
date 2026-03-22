@@ -1,0 +1,8 @@
+{"type":"server-started","port":61981,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:61981","screen_dir":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678"}
+{"type":"screen-added","file":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678/design-direction.html"}
+{"type":"screen-added","file":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678/page-structure.html"}
+{"type":"screen-added","file":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678/typography.html"}
+{"type":"screen-added","file":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678/waiting.html"}
+{"type":"screen-added","file":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678/design-hero.html"}
+{"type":"screen-added","file":"/Users/veland/PiDay/.superpowers/brainstorm/14433-1774168678/design-sections-2-3.html"}
+{"type":"server-stopped","reason":"idle timeout"}

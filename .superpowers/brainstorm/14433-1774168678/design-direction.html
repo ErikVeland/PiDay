@@ -1,0 +1,185 @@
+<style>
+  body { background: #0d0d0f; color: #e8e8ec; font-family: 'SF Pro Display', -apple-system, sans-serif; margin: 0; padding: 40px 24px; }
+  h2 { font-size: 28px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.5px; }
+  .subtitle { color: #888; font-size: 15px; margin: 0 0 48px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }
+
+  .card {
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+  }
+  .card:hover { transform: translateY(-3px); }
+  .card.selected { border-color: #5e8cf4; }
+
+  .card-image { height: 340px; position: relative; overflow: hidden; }
+  .card-body { padding: 20px; background: #16161a; }
+  .card-body h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+  .card-body p { margin: 0; font-size: 13px; color: #888; line-height: 1.5; }
+
+  /* ── Direction A: Dark Cosmic ── */
+  .dir-a .card-image {
+    background: #080c18;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    font-family: 'SF Mono', 'Menlo', monospace;
+  }
+  .dir-a .digits-bg {
+    position: absolute; inset: 0;
+    font-size: 11px; line-height: 1.6;
+    color: rgba(80,110,200,0.18);
+    padding: 12px;
+    word-break: break-all;
+    letter-spacing: 1px;
+    overflow: hidden;
+  }
+  .dir-a .hero-digits {
+    position: relative; z-index: 2;
+    padding: 20px 16px 28px;
+  }
+  .dir-a .pi-label {
+    font-size: 10px; letter-spacing: 3px; color: rgba(140,160,255,0.5);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .dir-a .digit-row {
+    font-size: 18px; letter-spacing: 2px; line-height: 1;
+    color: rgba(80,110,200,0.4);
+  }
+  .dir-a .digit-row .d { color: #ff7a45; }
+  .dir-a .digit-row .m { color: #38d4cc; }
+  .dir-a .digit-row .y { color: #6b9fff; }
+  .dir-a .tagline {
+    font-family: -apple-system, sans-serif;
+    font-size: 22px; font-weight: 700; color: #e8eeff;
+    margin-top: 10px; letter-spacing: -0.5px;
+    text-shadow: 0 0 30px rgba(100,140,255,0.4);
+  }
+  .dir-a .cta-pill {
+    display: inline-block;
+    margin-top: 10px;
+    background: rgba(94,140,244,0.2);
+    border: 1px solid rgba(94,140,244,0.4);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 11px; color: #8ab4ff;
+    font-family: -apple-system, sans-serif;
+  }
+  .dir-a .card-image { background: linear-gradient(160deg, #080c18 60%, #0d1230); }
+
+  /* ── Direction B: Warm Editorial ── */
+  .dir-b .card-image {
+    background: #fdf6ee;
+    display: flex; flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 0;
+    font-family: 'SF Mono', monospace;
+  }
+  .dir-b .top-bar { width: 100%; height: 44px; background: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(200,170,150,0.3); display: flex; align-items: center; padding: 0 14px; box-sizing: border-box; position: absolute; top: 0; }
+  .dir-b .nav-logo { font-family: -apple-system, sans-serif; font-weight: 700; font-size: 13px; color: #2d180f; letter-spacing: -0.2px; }
+  .dir-b .nav-pill { margin-left: auto; background: #d95c28; color: white; border-radius: 20px; padding: 4px 12px; font-size: 10px; font-family: -apple-system, sans-serif; font-weight: 600; }
+  .dir-b .content-area { position: absolute; inset: 0; top: 44px; display: flex; flex-direction: column; justify-content: flex-end; padding: 18px 16px 22px; }
+  .dir-b .eyebrow { font-size: 9px; letter-spacing: 3px; color: #d95c28; text-transform: uppercase; font-family: -apple-system, sans-serif; margin-bottom: 6px; }
+  .dir-b .big-headline { font-family: -apple-system, sans-serif; font-size: 24px; font-weight: 800; color: #2d180f; letter-spacing: -0.8px; line-height: 1.1; margin-bottom: 8px; }
+  .dir-b .digit-snippet { font-size: 12px; color: rgba(45,24,15,0.35); margin-bottom: 12px; letter-spacing: 1px; }
+  .dir-b .digit-snippet .d { color: #d95c28; }
+  .dir-b .digit-snippet .m { color: #c73058; }
+  .dir-b .digit-snippet .y { color: #902490; }
+  .dir-b .cta-warm { display: inline-block; background: #2d180f; color: #fdf6ee; border-radius: 8px; padding: 7px 16px; font-size: 11px; font-family: -apple-system, sans-serif; font-weight: 600; }
+
+  /* ── Direction C: Minimal Math ── */
+  .dir-c .card-image {
+    background: #fafafa;
+    font-family: 'SF Mono', monospace;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 24px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .dir-c .pi-symbol { font-size: 72px; color: #111; font-weight: 300; line-height: 1; margin-bottom: 4px; font-family: serif; }
+  .dir-c .equation { font-size: 11px; color: #bbb; letter-spacing: 2px; margin-bottom: 24px; font-family: -apple-system, sans-serif; text-transform: uppercase; }
+  .dir-c .mono-line { font-size: 10px; color: #ddd; letter-spacing: 2px; margin-bottom: 4px; line-height: 1.8; text-align: center; }
+  .dir-c .mono-line .highlight { background: #111; color: #fafafa; padding: 1px 3px; border-radius: 2px; }
+  .dir-c .separator { width: 32px; height: 1px; background: #ddd; margin: 16px auto; }
+  .dir-c .tagline-clean { font-family: -apple-system, sans-serif; font-size: 13px; font-weight: 600; color: #111; letter-spacing: -0.3px; text-align: center; }
+  .dir-c .sub-clean { font-size: 11px; color: #aaa; margin-top: 4px; font-family: -apple-system, sans-serif; text-align: center; }
+  .dir-c .card-image { background: #f9f9f9; }
+
+  .card-label {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(0,0,0,0.5); border-radius: 6px;
+    padding: 3px 8px; font-size: 10px; color: rgba(255,255,255,0.7);
+    font-family: -apple-system, sans-serif;
+    backdrop-filter: blur(4px);
+  }
+  .dir-b .card-label, .dir-c .card-label { background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.4); }
+</style>
+
+<h2>What's the overall feel of the website?</h2>
+<p class="subtitle">Three distinct directions — all use the app's visual language (monospaced digits, 3-color date highlighting). Click to select.</p>
+
+<div class="cards">
+
+  <!-- Direction A -->
+  <div class="card dir-a" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="card-label">A</div>
+      <div class="digits-bg">3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420199</div>
+      <div class="hero-digits">
+        <div class="pi-label">π = 3.</div>
+        <div class="digit-row">…1<span class="d">14</span><span class="m">03</span><span class="y">1995</span>82…</div>
+        <div class="tagline">Where are you<br>in infinity?</div>
+        <div class="cta-pill">↓ App Store</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Dark Cosmic</h3>
+      <p>Deep dark background, glowing digit canvas, Slate/Aurora palette. Bold, dramatic, night-sky feel. The digits are the hero.</p>
+    </div>
+  </div>
+
+  <!-- Direction B -->
+  <div class="card dir-b" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="card-label">B</div>
+      <div class="top-bar">
+        <span class="nav-logo">π PiDay</span>
+        <span class="nav-pill">App Store →</span>
+      </div>
+      <div class="content-area">
+        <div class="eyebrow">Your birthday in π</div>
+        <div class="big-headline">3.14159…<br>somewhere in there<br>is your date.</div>
+        <div class="digit-snippet">…6832 <span class="d">14</span><span class="m">03</span><span class="y">1995</span> 7241…</div>
+        <div class="cta-warm">Download free →</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Warm Editorial</h3>
+      <p>Light parchment background, Ember palette, editorial typography. Approachable and human. Digits as texture.</p>
+    </div>
+  </div>
+
+  <!-- Direction C -->
+  <div class="card dir-c" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="card-label">C</div>
+      <div class="pi-symbol">π</div>
+      <div class="equation">3.14159 26535 89793…</div>
+      <div class="mono-line">…68321 <span class="highlight">14031995</span> 72418…</div>
+      <div class="mono-line" style="color:#ccc; font-size:9px;">position 47,832,104</div>
+      <div class="separator"></div>
+      <div class="tagline-clean">Your date lives in π.</div>
+      <div class="sub-clean">Find it.</div>
+    </div>
+    <div class="card-body">
+      <h3>Minimal Mathematical</h3>
+      <p>White/off-white, surgical negative space, the π symbol large and proud. Pure, academic confidence.</p>
+    </div>
+  </div>
+
+</div>

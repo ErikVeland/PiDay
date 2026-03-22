@@ -109,29 +109,33 @@ struct DetailSheetView: View {
             .navigationTitle(formattedDate(viewModel.selectedDate))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                // WHY bookmark leading / gear trailing: iOS 26 groups multiple items
+                // on the same side into one wide glass pill instead of individual
+                // circles. Keeping one button per side forces the OS to size each
+                // glass shape around just that icon.
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack(spacing: 4) {
-                        // Bookmark toggle — save or unsave the currently selected date.
-                        Button {
-                            viewModel.toggleSaveCurrentDate()
-                        } label: {
-                            // WHY symbolEffect replace: animates the fill/empty transition
-                            // on the bookmark icon so the state change feels intentional.
-                            Image(systemName: viewModel.isCurrentDateSaved ? "bookmark.fill" : "bookmark.badge.plus")
-                                .contentTransition(.symbolEffect(.replace.offUp))
-                                .foregroundStyle(viewModel.isCurrentDateSaved ? palette.accent : palette.paneSecondaryText(for: colorScheme))
-                        }
-                        .accessibilityLabel(viewModel.isCurrentDateSaved ? "Remove saved date" : "Save date")
-
-                        // Preferences — opens the full preferences screen
-                        Button {
-                            navigateToPreferences = true
-                        } label: {
-                            Image(systemName: "gearshape")
-                                .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-                        }
-                        .accessibilityLabel("Preferences")
+                    // Bookmark toggle — save or unsave the currently selected date.
+                    Button {
+                        viewModel.toggleSaveCurrentDate()
+                    } label: {
+                        // WHY symbolEffect replace: animates the fill/empty transition
+                        // on the bookmark icon so the state change feels intentional.
+                        Image(systemName: viewModel.isCurrentDateSaved ? "bookmark.fill" : "bookmark")
+                            .frame(width: 24, height: 24)
+                            .contentTransition(.symbolEffect(.replace.offUp))
+                            .foregroundStyle(viewModel.isCurrentDateSaved ? palette.accent : palette.paneSecondaryText(for: colorScheme))
                     }
+                    .accessibilityLabel(viewModel.isCurrentDateSaved ? "Remove saved date" : "Save date")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        navigateToPreferences = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .frame(width: 24, height: 24)
+                            .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                    }
+                    .accessibilityLabel("Preferences")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { isPresented = false }
@@ -139,9 +143,13 @@ struct DetailSheetView: View {
             }
             .sheet(isPresented: $showSavedDates) {
                 SavedDatesView(isPresented: $showSavedDates)
+                    .environment(viewModel)
+                    .environment(preferences)
             }
             .sheet(isPresented: $showFreeSearch) {
                 FreeSearchView()
+                    .environment(viewModel)
+                    .environment(preferences)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
@@ -149,6 +157,8 @@ struct DetailSheetView: View {
             // @Environment(\.dismiss) in PreferencesView works for both push and sheet contexts.
             .navigationDestination(isPresented: $navigateToPreferences) {
                 PreferencesView()
+                    .environment(viewModel)
+                    .environment(preferences)
             }
         }
         // WHY preferredColorScheme here: sheets don't always inherit the window-level

@@ -148,8 +148,13 @@ struct BirthdayYearPromptView: View {
                 .datePickerStyle(.wheel)
                 .labelsHidden()
                 .onChange(of: selectedDate) { _, new in
-                    var gregorian = Calendar(identifier: .gregorian)
-                    gregorian.timeZone = TimeZone(secondsFromGMT: 0)!
+                    // WHY no explicit timeZone: the DatePicker produces dates in the
+                    // device's local timezone. Using a UTC-pinned Calendar here would
+                    // misread those dates on UTC+ devices (e.g. UTC+11 midnight local
+                    // = previous day in UTC), causing the month/day check to fail and
+                    // producing a corrected date whose local-timezone interpretation is
+                    // one day off. System timezone is correct and consistent with init.
+                    let gregorian = Calendar(identifier: .gregorian)
                     let comps = gregorian.dateComponents([.year, .month, .day], from: new)
                     guard comps.month != partial.month || comps.day != partial.day else { return }
                     // Month or day drifted — snap them back while keeping the new year.

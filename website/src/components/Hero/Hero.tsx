@@ -23,8 +23,9 @@ export default function Hero() {
         <h1 className={styles.headline}>Your date lives in π.</h1>
 
         <p className={styles.body}>
-          Somewhere in the infinite decimal expansion of pi, your birthday is hiding.
-          PiDay finds it — and shows you exactly where.
+          The nerdiest calendar app ever made. Every day, see exactly where today&rsquo;s
+          date hides in five billion digits of π. Look up your birthday and discover
+          your unique address in infinity.
         </p>
 
         <div className={styles.actions}>
@@ -35,7 +36,7 @@ export default function Hero() {
           >
             Download free
           </a>
-          <span className={styles.btnSecondary}>iPhone &amp; iPad</span>
+          <span className={styles.btnSecondary}>iPhone, iPad &amp; Mac</span>
         </div>
       </div>
 

@@ -81,7 +81,7 @@ final class PiLiveLookupService: @unchecked Sendable {
                 guard let position = result.storedPosition, let excerpt = result.excerpt else { return nil }
                 return BestPiMatch(format: result.format, query: result.query, storedPosition: position, excerpt: excerpt)
             }
-            .min(by: { $0.storedPosition < $1.storedPosition })
+            .min(by: BestPiMatch.preferringPadded)
 
         return DateLookupSummary(
             isoDate: isoDate,

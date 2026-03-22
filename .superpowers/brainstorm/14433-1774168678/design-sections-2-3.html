@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PiDay — Sections 2 & 3</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d0f; font-family: 'SF Pro Display', -apple-system, sans-serif; padding: 0; }
+
+  .frame-header {
+    background: #161618; border-bottom: 1px solid #252528;
+    padding: 14px 24px; display: flex; align-items: center; gap: 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .frame-title { font-size: 13px; font-weight: 600; color: #e8e8ec; letter-spacing: -0.2px; }
+  .frame-subtitle { font-size: 12px; color: #666; margin-left: auto; }
+  .frame-badge { background: #1e3a5f; border: 1px solid #2a5080; color: #7ab3e8; font-size: 10px; padding: 3px 10px; border-radius: 20px; }
+
+  .site-mockup {
+    max-width: 960px; margin: 40px auto 0;
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 40px 120px rgba(0,0,0,0.7);
+  }
+
+  /* ─── Section 2: How it works ─── */
+  .how {
+    background: white;
+    padding: 96px 64px;
+  }
+  .section-label {
+    font-family: 'SF Mono', monospace;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: #bbb; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after {
+    content: ''; flex: 1; height: 1px; background: #eee;
+  }
+  .how-headline {
+    font-family: 'Georgia', serif;
+    font-size: 38px; font-weight: 400; font-style: italic;
+    color: #111; letter-spacing: -0.8px; line-height: 1.1;
+    margin-bottom: 64px;
+    max-width: 480px;
+  }
+
+  .how-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid #f0efec;
+  }
+  .how-step {
+    padding: 40px 36px 40px 0;
+    border-right: 1px solid #f0efec;
+  }
+  .how-step:last-child { border-right: none; padding-right: 0; padding-left: 36px; }
+  .how-step:nth-child(2) { padding-left: 36px; }
+
+  .step-number {
+    font-family: 'SF Mono', monospace;
+    font-size: 10px; letter-spacing: 2px; color: #ccc;
+    margin-bottom: 20px;
+  }
+  .step-visual {
+    height: 64px; display: flex; align-items: center;
+    margin-bottom: 20px;
+  }
+  .step-title {
+    font-family: 'Georgia', serif;
+    font-size: 19px; font-weight: 400; font-style: italic;
+    color: #111; margin-bottom: 10px; letter-spacing: -0.3px;
+  }
+  .step-body {
+    font-family: -apple-system, sans-serif;
+    font-size: 13px; color: #999; line-height: 1.65;
+  }
+
+  /* Step visuals */
+  .vis-calendar {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 3px; width: 130px;
+  }
+  .vis-calendar .cell {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: #f5f5f3; font-family: 'SF Mono', monospace;
+    font-size: 6px; display: flex; align-items: center; justify-content: center;
+    color: #bbb;
+  }
+  .vis-calendar .cell.hot  { background: #d95c28; color: white; }
+  .vis-calendar .cell.warm { background: #f0a882; color: white; }
+  .vis-calendar .cell.cool { background: #b8e0dd; color: #666; }
+  .vis-calendar .cell.faint { background: #e8f5f4; }
+
+  .vis-digits {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px; color: #ddd; letter-spacing: 2px; line-height: 2;
+  }
+  .vis-digits .d { color: #d95c28; font-weight: 700; }
+  .vis-digits .m { color: #0e9a8e; font-weight: 700; }
+  .vis-digits .y { color: #4a7abf; font-weight: 700; }
+
+  .vis-share {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .share-chip {
+    background: #f5f5f3; border-radius: 20px;
+    padding: 5px 12px; font-family: 'SF Mono', monospace;
+    font-size: 9px; color: #888; letter-spacing: 1px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .share-chip .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ─── Section 3: Themes + CTA ─── */
+  .themes {
+    background: #f9f8f5;
+    padding: 96px 64px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+  }
+  .themes-headline {
+    font-family: 'Georgia', serif;
+    font-size: 38px; font-weight: 400; font-style: italic;
+    color: #111; letter-spacing: -0.8px; line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .themes-sub {
+    font-family: 'Georgia', serif;
+    font-size: 15px; color: #999; line-height: 1.6;
+    margin-bottom: 56px; max-width: 460px;
+  }
+  .themes-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-bottom: 64px;
+  }
+  .theme-swatch {
+    border-radius: 12px; overflow: hidden;
+    aspect-ratio: 3/4;
+    position: relative;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .swatch-bg { position: absolute; inset: 0; }
+  .swatch-content {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px 8px;
+  }
+  .swatch-name {
+    font-family: 'SF Mono', monospace;
+    font-size: 7px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .swatch-digits {
+    font-family: 'SF Mono', monospace;
+    font-size: 7px; letter-spacing: 1px;
+    margin-top: 3px; opacity: 0.6;
+  }
+
+  /* Theme colors */
+  .t-frost  .swatch-bg { background: #eef2fa; }
+  .t-frost  .swatch-name { color: #2a4a7a; }
+  .t-frost  .swatch-digits { color: #2a4a7a; }
+
+  .t-slate  .swatch-bg { background: #0d1220; }
+  .t-slate  .swatch-name { color: #5a96ff; }
+  .t-slate  .swatch-digits { color: #5a96ff; }
+
+  .t-coppice .swatch-bg { background: #0e1f0e; }
+  .t-coppice .swatch-name { color: #66c05a; }
+  .t-coppice .swatch-digits { color: #66c05a; }
+
+  .t-ember  .swatch-bg { background: #fdf0e6; }
+  .t-ember  .swatch-name { color: #d95c28; }
+  .t-ember  .swatch-digits { color: #d95c28; }
+
+  .t-aurora .swatch-bg { background: #060b18; }
+  .t-aurora .swatch-name { color: #38f5d0; }
+  .t-aurora .swatch-digits { color: #38f5d0; }
+
+  .t-matrix .swatch-bg { background: #020a03; }
+  .t-matrix .swatch-name { color: #52ff72; }
+  .t-matrix .swatch-digits { color: #52ff72; }
+
+  /* Digit accent bar in each swatch */
+  .swatch-bar {
+    height: 2px; border-radius: 1px;
+    margin-bottom: 6px;
+    display: flex; gap: 2px;
+  }
+  .swatch-bar span { height: 100%; flex: 1; border-radius: 1px; }
+
+  /* Final CTA */
+  .cta-section {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 56px; border-top: 1px solid rgba(0,0,0,0.07);
+  }
+  .cta-left {}
+  .cta-tagline {
+    font-family: 'Georgia', serif;
+    font-size: 28px; font-weight: 400; font-style: italic;
+    color: #111; letter-spacing: -0.5px; line-height: 1.2;
+    margin-bottom: 6px;
+  }
+  .cta-sub {
+    font-family: -apple-system, sans-serif;
+    font-size: 13px; color: #bbb;
+  }
+  .cta-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .btn-download {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #111; color: #f9f8f5;
+    font-family: -apple-system, sans-serif;
+    font-size: 13px; font-weight: 600;
+    padding: 14px 28px; border-radius: 12px;
+    text-decoration: none; letter-spacing: -0.3px;
+  }
+  .btn-note {
+    font-family: 'SF Mono', monospace;
+    font-size: 9px; color: #ccc; letter-spacing: 1px;
+  }
+
+  /* Footer */
+  .footer {
+    background: white;
+    border-top: 1px solid #f0efec;
+    padding: 24px 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px; color: #bbb; letter-spacing: -0.2px;
+  }
+  .footer-copy {
+    font-family: -apple-system, sans-serif;
+    font-size: 11px; color: #ccc;
+  }
+
+  .design-note {
+    background: rgba(22,22,24,0.95);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+    max-width: 960px;
+    margin: 24px auto 48px;
+    font-size: 13px; line-height: 1.6; color: #999;
+  }
+  .design-note strong { color: #e8e8ec; }
+  .design-note ul { margin: 10px 0 0 18px; }
+  .design-note li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="frame-header">
+  <span class="frame-badge">Sections 2 & 3 of 3</span>
+  <span class="frame-title">How it works + Themes — piday.glasscode.academy</span>
+  <span class="frame-subtitle">Scroll down to see both</span>
+</div>
+
+<div style="padding: 0 24px;">
+<div class="site-mockup">
+
+  <!-- ── Section 2: How it works ── -->
+  <section class="how">
+    <div class="section-label">How it works</div>
+    <h2 class="how-headline">Three steps to<br>your place in infinity.</h2>
+
+    <div class="how-steps">
+
+      <!-- Step 1 -->
+      <div class="how-step">
+        <div class="step-number">01</div>
+        <div class="step-visual">
+          <div class="vis-digits">
+            …5831<br><span class="d">14</span><span class="m">03</span><span class="y">1995</span><br>7284…
+          </div>
+        </div>
+        <div class="step-title">Pick your date.</div>
+        <div class="step-body">Choose any birthday, anniversary, or date that matters. PiDay searches across five billion digits of π in every date format simultaneously.</div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="how-step">
+        <div class="step-number">02</div>
+        <div class="step-visual">
+          <div class="vis-calendar">
+            <div class="cell"></div><div class="cell faint">1</div><div class="cell cool">2</div><div class="cell warm">3</div><div class="cell faint">4</div><div class="cell cool">5</div><div class="cell faint">6</div>
+            <div class="cell warm">7</div><div class="cell hot">8</div><div class="cell faint">9</div><div class="cell cool">10</div><div class="cell warm">11</div><div class="cell faint">12</div><div class="cell cool">13</div>
+            <div class="cell faint">14</div><div class="cell warm">15</div><div class="cell cool">16</div><div class="cell faint">17</div><div class="cell warm">18</div><div class="cell hot">19</div><div class="cell faint">20</div>
+            <div class="cell cool">21</div><div class="cell faint">22</div><div class="cell warm">23</div><div class="cell cool">24</div><div class="cell faint">25</div><div class="cell cool">26</div><div class="cell faint">27</div>
+          </div>
+        </div>
+        <div class="step-title">See the heat map.</div>
+        <div class="step-body">A calendar fills with colour — hotter dates appear earlier in π. See at a glance how your whole month compares, date by date.</div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="how-step">
+        <div class="step-number">03</div>
+        <div class="step-visual">
+          <div class="vis-share">
+            <div class="share-chip"><div class="dot" style="background:#d95c28;"></div>day 14 · pos 47,832,104</div>
+            <div class="share-chip"><div class="dot" style="background:#0e9a8e;"></div>month 03 · pos 12,441</div>
+            <div class="share-chip"><div class="dot" style="background:#4a7abf;"></div>year 1995 · pos 91,203</div>
+          </div>
+        </div>
+        <div class="step-title">Share the discovery.</div>
+        <div class="step-body">Save your result as a card and share it. Six themes, multiple date formats, and a canvas of π digits you can scroll forever.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Section 3: Themes + CTA ── -->
+  <section class="themes">
+    <div class="section-label">Themes</div>
+    <h2 class="themes-headline">Six ways to see<br>your number.</h2>
+    <p class="themes-sub">From warm parchment to phosphor green — each theme is a distinct world. Change anytime.</p>
+
+    <div class="themes-grid">
+
+      <div class="theme-swatch t-frost">
+        <div class="swatch-bg"></div>
+        <div class="swatch-content">
+          <div class="swatch-bar">
+            <span style="background:#e07020;"></span>
+            <span style="background:#1a8899;"></span>
+            <span style="background:#2a5aaa;"></span>
+          </div>
+          <div class="swatch-name">Frost</div>
+          <div class="swatch-digits">·light·</div>
+        </div>
+      </div>
+
+      <div class="theme-swatch t-slate">
+        <div class="swatch-bg"></div>
+        <div class="swatch-content">
+          <div class="swatch-bar">
+            <span style="background:#ff8040;"></span>
+            <span style="background:#28ccdd;"></span>
+            <span style="background:#6a9fff;"></span>
+          </div>
+          <div class="swatch-name">Slate</div>
+          <div class="swatch-digits">·dark·</div>
+        </div>
+      </div>
+
+      <div class="theme-swatch t-coppice">
+        <div class="swatch-bg"></div>
+        <div class="swatch-content">
+          <div class="swatch-bar">
+            <span style="background:#dd7722;"></span>
+            <span style="background:#33bb44;"></span>
+            <span style="background:#4488cc;"></span>
+          </div>
+          <div class="swatch-name">Coppice</div>
+          <div class="swatch-digits">·dark·</div>
+        </div>
+      </div>
+
+      <div class="theme-swatch t-ember">
+        <div class="swatch-bg"></div>
+        <div class="swatch-content">
+          <div class="swatch-bar">
+            <span style="background:#d95c28;"></span>
+            <span style="background:#c73058;"></span>
+            <span style="background:#902490;"></span>
+          </div>
+          <div class="swatch-name">Ember</div>
+          <div class="swatch-digits">·light·</div>
+        </div>
+      </div>
+
+      <div class="theme-swatch t-aurora">
+        <div class="swatch-bg"></div>
+        <div class="swatch-content">
+          <div class="swatch-bar">
+            <span style="background:#ff7733;"></span>
+            <span style="background:#38f5d0;"></span>
+            <span style="background:#5599ff;"></span>
+          </div>
+          <div class="swatch-name">Aurora</div>
+          <div class="swatch-digits">·dark·</div>
+        </div>
+      </div>
+
+      <div class="theme-swatch t-matrix">
+        <div class="swatch-bg"></div>
+        <div class="swatch-content">
+          <div class="swatch-bar">
+            <span style="background:#52ff72;"></span>
+            <span style="background:#22cc44;"></span>
+            <span style="background:#88ffaa;"></span>
+          </div>
+          <div class="swatch-name">Matrix</div>
+          <div class="swatch-digits">·dark·</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Final CTA -->
+    <div class="cta-section">
+      <div class="cta-left">
+        <div class="cta-tagline">Find your date in π.</div>
+        <div class="cta-sub">Free · iPhone &amp; iPad · iOS 17+</div>
+      </div>
+      <div class="cta-right">
+        <a href="#" class="btn-download">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14.25 13.5C14.25 13.5 15.75 12 15.75 9C15.75 5.68629 13.0637 3 9.75 3C8.39862 3 7.15338 3.44866 6.15476 4.2M3.75 4.5C3.75 4.5 2.25 6 2.25 9C2.25 12.3137 4.93629 15 8.25 15C9.60138 15 10.8466 14.5513 11.8452 13.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 6.75V11.25M9 11.25L7.5 9.75M9 11.25L10.5 9.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download on the App Store
+        </a>
+        <div class="btn-note">FREE · NO ADS · NO TRACKING</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-logo"><span style="color:#ccc;">π</span> PiDay</div>
+    <div class="footer-copy">© 2026 glasscode.academy · Made with curiosity</div>
+  </footer>
+
+</div>
+</div>
+
+<div class="design-note">
+  <strong>Sections 2 & 3 — complete page</strong><br>
+  Section 2 uses a clean three-column step layout on white. Section 3 returns to the warm off-white, shows all six theme swatches with their digit-color accent bars, then ends with a final CTA. Does this feel complete, or would you like to adjust anything before I write the spec?
+</div>
+
+</body>
+</html>

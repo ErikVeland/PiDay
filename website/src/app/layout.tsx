@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.scss'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://piday.glasscode.academy'),
   title: 'PiDay — Find your birthday in π',
   description: 'Your birthday is hiding somewhere in the infinite digits of pi. PiDay finds it.',
   openGraph: {

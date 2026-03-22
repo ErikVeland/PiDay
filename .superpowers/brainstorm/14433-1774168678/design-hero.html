@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PiDay — Hero Design</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0f;
+    color: #e8e8ec;
+    font-family: 'SF Pro Display', -apple-system, sans-serif;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  /* ─── Brainstorm frame ─── */
+  .frame-header {
+    background: #161618;
+    border-bottom: 1px solid #252528;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .frame-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8e8ec;
+    letter-spacing: -0.2px;
+  }
+  .frame-subtitle {
+    font-size: 12px;
+    color: #666;
+    margin-left: auto;
+  }
+  .frame-badge {
+    background: #1e3a5f;
+    border: 1px solid #2a5080;
+    color: #7ab3e8;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ─── Site mockup wrapper ─── */
+  .site-mockup {
+    max-width: 960px;
+    margin: 40px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 40px 120px rgba(0,0,0,0.7);
+  }
+
+  /* ─── Nav ─── */
+  .nav {
+    background: rgba(249,248,245,0.97);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    padding: 0 48px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .nav-logo .pi { color: #888; font-weight: 400; margin-right: 2px; }
+  .nav-cta {
+    font-family: -apple-system, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #111;
+    border: 1px solid rgba(0,0,0,0.18);
+    border-radius: 20px;
+    padding: 6px 16px;
+    text-decoration: none;
+    letter-spacing: -0.2px;
+    transition: background 0.15s;
+  }
+
+  /* ─── Hero ─── */
+  .hero {
+    background: #f9f8f5;
+    padding: 80px 48px 96px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+    min-height: 540px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background digit texture — the infinite digits of π */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    letter-spacing: 2px;
+    color: rgba(0,0,0,0.045);
+    padding: 20px 24px;
+    word-break: break-all;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Left: text content */
+  .hero-content { position: relative; z-index: 2; }
+  .hero-eyebrow {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #bbb;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero-headline {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 52px;
+    font-weight: 400;
+    font-style: italic;
+    color: #111;
+    line-height: 1.08;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+  }
+  .hero-body {
+    font-family: 'Georgia', serif;
+    font-size: 16px;
+    color: #777;
+    line-height: 1.75;
+    max-width: 380px;
+    margin-bottom: 36px;
+  }
+  .hero-actions { display: flex; align-items: center; gap: 20px; }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #111;
+    color: #f9f8f5;
+    font-family: -apple-system, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    letter-spacing: -0.3px;
+  }
+  .btn-secondary {
+    font-family: 'Georgia', serif;
+    font-size: 14px;
+    color: #888;
+    text-decoration: none;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 1px;
+  }
+
+  /* Right: digit canvas */
+  .hero-canvas { position: relative; z-index: 2; }
+  .canvas-label {
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #ccc;
+    margin-bottom: 12px;
+  }
+  .canvas-box {
+    background: white;
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 10px;
+    padding: 28px 24px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+  }
+  .canvas-pi-row {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: #ddd;
+    letter-spacing: 2px;
+    line-height: 2;
+    word-break: break-all;
+    user-select: none;
+  }
+  .canvas-pi-row .day    { color: #d95c28; font-weight: 700; }
+  .canvas-pi-row .month  { color: #0e9a8e; font-weight: 700; }
+  .canvas-pi-row .year   { color: #4a7abf; font-weight: 700; }
+  .canvas-pi-row .active { background: rgba(0,0,0,0.04); border-radius: 3px; padding: 0 1px; }
+
+  .canvas-result {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid #f0efec;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .result-chip {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .result-label {
+    font-family: 'SF Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ccc;
+  }
+  .result-value {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .result-sub {
+    font-family: -apple-system, sans-serif;
+    font-size: 10px;
+    color: #aaa;
+  }
+  .result-chip.day .result-value    { color: #d95c28; }
+  .result-chip.month .result-value  { color: #0e9a8e; }
+  .result-chip.year .result-value   { color: #4a7abf; }
+
+  .canvas-position {
+    margin-top: 14px;
+    font-family: 'SF Mono', monospace;
+    font-size: 9px;
+    color: #ccc;
+    letter-spacing: 1px;
+  }
+  .canvas-position strong {
+    color: #888;
+    font-weight: 600;
+  }
+
+  /* ─── Divider ─── */
+  .section-divider {
+    background: #f9f8f5;
+    padding: 0 48px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 1px;
+    position: relative;
+  }
+  .section-divider::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06) 30%, rgba(0,0,0,0.06) 70%, transparent);
+  }
+
+  /* ─── Note overlay ─── */
+  .design-note {
+    background: rgba(22,22,24,0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 20px 24px;
+    max-width: 960px;
+    margin: 24px auto 48px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #999;
+  }
+  .design-note strong { color: #e8e8ec; }
+  .design-note ul { margin: 10px 0 0 18px; }
+  .design-note li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="frame-header">
+  <span class="frame-badge">Section 1 of 3</span>
+  <span class="frame-title">Hero — piday.glasscode.academy</span>
+  <span class="frame-subtitle">Minimal Mathematical · Serif + Mono · 3 sections</span>
+</div>
+
+<div style="padding: 0 24px;">
+
+  <div class="site-mockup">
+
+    <!-- Nav -->
+    <nav class="nav">
+      <div class="nav-logo">
+        <span class="pi">π</span> PiDay
+      </div>
+      <a href="#" class="nav-cta">App Store →</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <!-- Background texture -->
+      <div class="hero-bg" aria-hidden="true">
+        3141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609433057270365759591953092186117381932611793105118548074462379962749567351885752724891227938183011949129833673362440656643086021394946395224737190702179860943702770539217176293176752384674818467669405132000568127145263560827785771342757789609173637178721468440901224953430146549585371050792279689258923542019956112129021960864034418159813629774771309960518707211349999998372978049951059731732816096318595024459455346908302642522308253344685035261931188171010003137838752886587533208381420617177669147303598253490428755468731159562863882353787593751957781857780532171226806613001927876611195909216420199
+      </div>
+
+      <!-- Left: content -->
+      <div class="hero-content">
+        <div class="hero-eyebrow">π · 3.14159 26535…</div>
+        <h1 class="hero-headline">
+          Your date<br>lives in π.
+        </h1>
+        <p class="hero-body">
+          Somewhere in the infinite decimal expansion of pi, your birthday is hiding. PiDay finds it — and shows you exactly where.
+        </p>
+        <div class="hero-actions">
+          <a href="#" class="btn-primary">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L7 10M7 10L4 7M7 10L10 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Download free
+          </a>
+          <a href="#" class="btn-secondary">iPhone &amp; iPad</a>
+        </div>
+      </div>
+
+      <!-- Right: digit canvas -->
+      <div class="hero-canvas">
+        <div class="canvas-label">π — first 5 billion digits</div>
+        <div class="canvas-box">
+          <div class="canvas-pi-row">
+            3.14159 26535 89793 23846 26433 83279
+            50288 41971 69399 37510 58209 74944
+            59230 78164 06286 20899 86280 34825
+            3 <span class="active day">14</span><span class="active month">03</span><span class="active year">1995</span>
+            11706 79821 48086 51328 23064 70938
+            44609 55058 22317 25359 40812 84811
+          </div>
+
+          <div class="canvas-result">
+            <div class="result-chip day">
+              <span class="result-label">Day</span>
+              <span class="result-value">14</span>
+              <span class="result-sub">March</span>
+            </div>
+            <div class="result-chip month">
+              <span class="result-label">Month</span>
+              <span class="result-value">03</span>
+              <span class="result-sub">π Day ✦</span>
+            </div>
+            <div class="result-chip year">
+              <span class="result-label">Year</span>
+              <span class="result-value">1995</span>
+              <span class="result-sub">found</span>
+            </div>
+          </div>
+
+          <div class="canvas-position">
+            Position <strong>47,832,104</strong> · format DDMMYYYY · 5 billion digits searched
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="design-note">
+    <strong>Section 1 — Hero</strong><br>
+    The digit canvas on the right is the centrepiece — it shows a real excerpt from π with a date highlighted across three colors (orange day · teal month · blue year). The faint background texture is the actual digits of π at low opacity. Next sections: <strong>How it works</strong> (3 feature beats) → <strong>Themes + download</strong>.
+    <ul>
+      <li>Does the two-column hero feel balanced, or should the π symbol be bigger / more dominant?</li>
+      <li>Does the off-white <code>#f9f8f5</code> background feel right, or too warm / too cold?</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+// inject the helper for selections
+</script>
+</body>
+</html>

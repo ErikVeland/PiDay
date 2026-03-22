@@ -115,7 +115,7 @@ export default function Themes() {
         <div className={styles.cta}>
           <div className={styles.ctaLeft}>
             <p className={styles.ctaHeadline}>Find your date in π.</p>
-            <p className={styles.ctaSub}>Free · iPhone &amp; iPad · iOS 17+</p>
+            <p className={styles.ctaSub}>Free · iPhone, iPad &amp; Mac · iOS 17+</p>
           </div>
 
           <div className={styles.ctaRight}>

@@ -1,0 +1,184 @@
+<style>
+  body { background: #0d0d0f; color: #e8e8ec; font-family: 'SF Pro Display', -apple-system, sans-serif; margin: 0; padding: 40px 24px; }
+  h2 { font-size: 28px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.5px; }
+  .subtitle { color: #888; font-size: 15px; margin: 0 0 48px; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }
+  .card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    border: 2px solid #222; transition: border-color 0.2s, transform 0.15s;
+    background: #111;
+  }
+  .card:hover { transform: translateY(-3px); border-color: #333; }
+  .card.selected { border-color: #5e8cf4; }
+  .card-image { height: 420px; position: relative; overflow: hidden; background: #f8f8f6; border-bottom: 1px solid #e5e5e0; }
+  .card-body { padding: 20px; }
+  .card-body h3 { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+  .card-body p { margin: 0; font-size: 13px; color: #888; line-height: 1.5; }
+
+  /* Wireframe shared styles */
+  .wf { width: 100%; height: 100%; display: flex; flex-direction: column; font-family: -apple-system, sans-serif; }
+  .wf-nav { height: 36px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; padding: 0 12px; flex-shrink: 0; }
+  .wf-nav-logo { font-size: 10px; font-weight: 700; color: #111; font-family: 'SF Mono', monospace; }
+  .wf-section { flex-shrink: 0; border-bottom: 1px solid #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 12px; text-align: center; position: relative; }
+  .wf-label { position: absolute; top: 6px; left: 8px; font-size: 7px; letter-spacing: 1.5px; text-transform: uppercase; color: #bbb; }
+  .wf-pi { font-size: 42px; color: #111; font-weight: 300; font-family: serif; line-height: 1; }
+  .wf-tagline { font-size: 9px; color: #555; margin-top: 4px; letter-spacing: 0.3px; }
+  .wf-digits { font-family: 'SF Mono', monospace; font-size: 8px; color: #ccc; letter-spacing: 1.5px; margin-top: 6px; }
+  .wf-digits .d { color: #d95c28; } .wf-digits .m { color: #09b; } .wf-digits .y { color: #666; }
+  .wf-cta { margin-top: 8px; background: #111; color: white; border-radius: 6px; padding: 5px 14px; font-size: 8px; font-weight: 600; }
+  .wf-heading { font-size: 9px; font-weight: 700; color: #111; margin-bottom: 5px; letter-spacing: -0.2px; }
+  .wf-bar { height: 6px; background: #eee; border-radius: 3px; width: 80%; margin: 3px auto; }
+  .wf-bar.short { width: 55%; background: #e5e5e0; }
+  .wf-bar.tiny { width: 35%; background: #ebebea; height: 4px; }
+  .wf-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; width: 100%; padding: 0 8px; box-sizing: border-box; }
+  .wf-card { background: #f2f2f0; border-radius: 4px; height: 36px; }
+  .wf-phone { width: 40px; height: 76px; background: #111; border-radius: 7px; position: relative; margin: 0 auto; }
+  .wf-phone::after { content: ''; position: absolute; inset: 3px; background: #f5f5f3; border-radius: 5px; }
+  .wf-screens { display: flex; gap: 6px; justify-content: center; }
+  .wf-phone-sm { width: 28px; height: 54px; background: #111; border-radius: 5px; position: relative; }
+  .wf-phone-sm::after { content: ''; position: absolute; inset: 2px; background: #f5f5f3; border-radius: 4px; }
+  .wf-themes { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; padding: 0 8px; }
+  .wf-dot { width: 20px; height: 20px; border-radius: 50%; }
+  .wf-footer { background: #fafaf8; height: 30px; display: flex; align-items: center; justify-content: center; margin-top: auto; }
+  .wf-footer-text { font-size: 7px; color: #bbb; letter-spacing: 0.5px; }
+  .wf-badge { width: 70px; height: 18px; background: #111; border-radius: 4px; }
+  .section-tag { font-size: 7px; color: #999; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+</style>
+
+<h2>How much content should the page have?</h2>
+<p class="subtitle">All three are single-page. The question is depth — how much to tell before the App Store button.</p>
+
+<div class="cards">
+
+  <!-- Option A: One screen -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-nav"><span class="wf-nav-logo">π PiDay</span></div>
+        <div class="wf-section" style="flex: 1; border: none; justify-content: center; gap: 0;">
+          <div class="wf-label">Hero — fills viewport</div>
+          <div class="wf-pi">π</div>
+          <div style="font-family:'SF Mono',monospace; font-size:9px; color:#ccc; letter-spacing:2px; margin-top:8px;">3.14159265358…</div>
+          <div style="font-family:'SF Mono',monospace; font-size:9px; margin-top:4px;" class="wf-digits">…<span class="d">14</span><span class="m">03</span><span class="y">1995</span>…</div>
+          <div style="font-size:11px; font-weight:700; color:#111; margin-top:16px; letter-spacing:-0.4px;">Your date lives in π.</div>
+          <div style="font-size:9px; color:#999; margin-top:4px;">Find out where.</div>
+          <div style="margin-top:20px; display:flex; flex-direction:column; align-items:center; gap:6px;">
+            <div class="wf-badge"></div>
+            <div style="font-size:7px; color:#ccc;">Free · iPhone & iPad</div>
+          </div>
+        </div>
+        <div class="wf-footer"><span class="wf-footer-text">© glasscode.academy</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>One Screen</h3>
+      <p>Pure hero — π symbol, digit stream with your date highlighted, tagline, App Store badge. Nothing else. Maximum impact, zero distraction.</p>
+    </div>
+  </div>
+
+  <!-- Option B: 3 sections -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-nav"><span class="wf-nav-logo">π PiDay</span></div>
+
+        <div class="wf-section" style="flex: 2.2;">
+          <div class="wf-label">1 — Hero</div>
+          <div class="wf-pi" style="font-size: 32px;">π</div>
+          <div style="font-family:'SF Mono',monospace; font-size:8px; color:#ccc; margin-top:5px;" class="wf-digits">…<span class="d">14</span><span class="m">03</span><span class="y">1995</span>…</div>
+          <div style="font-size:10px; font-weight:700; color:#111; margin-top:8px;">Your date lives in π.</div>
+          <div style="margin-top:8px;"><div class="wf-badge" style="width:60px; height:14px;"></div></div>
+        </div>
+
+        <div class="wf-section" style="flex: 1.8;">
+          <div class="wf-label">2 — How it works</div>
+          <div class="section-tag">How it works</div>
+          <div class="wf-bar" style="margin-top:4px;"></div>
+          <div class="wf-bar short"></div>
+          <div class="wf-bar tiny"></div>
+          <div class="wf-grid" style="margin-top:8px;">
+            <div class="wf-card"></div>
+            <div class="wf-card"></div>
+          </div>
+        </div>
+
+        <div class="wf-section" style="flex: 1.6;">
+          <div class="wf-label">3 — Themes + Download</div>
+          <div class="section-tag">Themes</div>
+          <div class="wf-themes">
+            <div class="wf-dot" style="background:#e8f0fe;"></div>
+            <div class="wf-dot" style="background:#0d1a3a;"></div>
+            <div class="wf-dot" style="background:#0c1a10;"></div>
+            <div class="wf-dot" style="background:#fdf0e8;"></div>
+            <div class="wf-dot" style="background:#060b18;"></div>
+          </div>
+          <div style="margin-top:8px;"><div class="wf-badge" style="width:60px; height:14px;"></div></div>
+        </div>
+
+        <div class="wf-footer"><span class="wf-footer-text">© glasscode.academy</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>3 Sections</h3>
+      <p>Hero → a brief "how it works" with 2–3 feature beats → themes palette + final CTA. Tells the story without overstaying.</p>
+    </div>
+  </div>
+
+  <!-- Option C: 5 sections -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="wf">
+        <div class="wf-nav"><span class="wf-nav-logo">π PiDay</span></div>
+
+        <div class="wf-section" style="flex: 1.8;">
+          <div class="wf-label">1 — Hero</div>
+          <div class="wf-pi" style="font-size:26px;">π</div>
+          <div style="font-size:9px; font-weight:700; color:#111; margin-top:6px;">Your date lives in π.</div>
+          <div style="margin-top:5px;"><div class="wf-badge" style="width:52px; height:12px;"></div></div>
+        </div>
+
+        <div class="wf-section" style="flex: 1.4;">
+          <div class="wf-label">2 — Live digit stream</div>
+          <div style="font-family:'SF Mono',monospace; font-size:8px; color:#ddd; letter-spacing:1px; line-height:1.7; text-align:center;">
+            3.1415926535 8979323846<br>
+            26433<span style="background:#111; color:white; padding:0 2px; border-radius:2px; margin:0 1px;">1403</span><span style="background:#555; color:white; padding:0 2px; border-radius:2px; margin:0 1px;">1995</span>02884
+          </div>
+        </div>
+
+        <div class="wf-section" style="flex: 1.1;">
+          <div class="wf-label">3 — Features</div>
+          <div class="section-tag">Features</div>
+          <div class="wf-grid" style="margin-top:4px;">
+            <div class="wf-card" style="height:26px;"></div>
+            <div class="wf-card" style="height:26px;"></div>
+            <div class="wf-card" style="height:26px;"></div>
+            <div class="wf-card" style="height:26px;"></div>
+          </div>
+        </div>
+
+        <div class="wf-section" style="flex: 1.1;">
+          <div class="wf-label">4 — Phone screenshots</div>
+          <div class="wf-screens">
+            <div class="wf-phone-sm"></div>
+            <div class="wf-phone" style="width:36px; height:66px;"></div>
+            <div class="wf-phone-sm"></div>
+          </div>
+        </div>
+
+        <div class="wf-section" style="flex: 0.9;">
+          <div class="wf-label">5 — Download CTA</div>
+          <div style="font-size:9px; font-weight:700; color:#111;">Find your date.</div>
+          <div style="margin-top:6px;"><div class="wf-badge" style="width:60px; height:14px;"></div></div>
+        </div>
+
+        <div class="wf-footer"><span class="wf-footer-text">© glasscode.academy</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>5 Sections</h3>
+      <p>Hero → animated digit canvas → features grid → phone screenshots → download CTA. Full storytelling — more like a proper App Store marketing page.</p>
+    </div>
+  </div>
+
+</div>
