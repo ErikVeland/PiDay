@@ -1,0 +1,48 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--space-7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  background: rgba(249, 248, 245, 0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+  letter-spacing: -0.3px;
+  text-decoration: none;
+}
+
+.pi {
+  color: var(--color-ink-faint);
+  font-weight: 400;
+}
+
+.cta {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-ink);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 20px;
+  padding: 6px 16px;
+  text-decoration: none;
+  letter-spacing: -0.2px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.28);
+  }
+}
