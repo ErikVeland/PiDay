@@ -2,10 +2,26 @@ import type { Metadata } from 'next'
 import Nav from '@/components/Nav/Nav'
 import Footer from '@/components/Footer/Footer'
 import styles from './Privacy.module.scss'
+import { PRIVACY_EMAIL, SITE_URL } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — PiDay',
-  description: 'PiDay privacy policy. No tracking, no ads, no accounts.',
+  title: 'Privacy Policy',
+  description: 'PiDay collects no personal data. No tracking, no ads, no account required.',
+  alternates: {
+    canonical: '/privacy',
+  },
+  openGraph: {
+    title: 'Privacy Policy — PiDay',
+    description: 'PiDay collects no personal data. No tracking, no ads, no account required.',
+    url: `${SITE_URL}/privacy`,
+    images: [{ url: '/og-privacy.png', width: 1200, height: 630, alt: 'PiDay Privacy Policy' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy — PiDay',
+    description: 'PiDay collects no personal data. No tracking, no ads, no account required.',
+    images: [{ url: '/og-privacy.png', alt: 'PiDay Privacy Policy' }],
+  },
 }
 
 export default function PrivacyPage() {
@@ -17,7 +33,6 @@ export default function PrivacyPage() {
           <h1 className={styles.pageTitle}>Privacy Policy</h1>
           <p className={styles.dateLine}>Last updated: March 2026</p>
 
-          {/* ── Overview ─────────────────────────────────────────────── */}
           <p className={styles.intro}>
             PiDay is a simple tool. It doesn&apos;t know who you are, track what
             you do, or sell anything. There are no accounts, no ads, and no
@@ -26,7 +41,6 @@ export default function PrivacyPage() {
 
           <hr className={styles.divider} />
 
-          {/* ── What we collect ──────────────────────────────────────── */}
           <h2 className={styles.sectionHeading}>What we collect</h2>
           <p className={styles.body}>
             The table below covers every category of data we considered. The
@@ -55,10 +69,7 @@ export default function PrivacyPage() {
               <tr>
                 <td>Contacts</td>
                 <td className={styles.no}>No</td>
-                <td>
-                  Birthday contact picker reads only the date field; nothing is
-                  stored server-side
-                </td>
+                <td>Birthday contact picker reads only the date field; nothing is stored server-side</td>
               </tr>
               <tr>
                 <td>Device identifiers</td>
@@ -92,17 +103,13 @@ export default function PrivacyPage() {
               <tr>
                 <td>Crash / diagnostics</td>
                 <td>Via Apple only</td>
-                <td>
-                  Standard iOS crash reporting through Apple&apos;s platform; no
-                  additional SDK
-                </td>
+                <td>Standard iOS crash reporting through Apple&apos;s platform; no additional SDK</td>
               </tr>
             </tbody>
           </table>
 
           <hr className={styles.divider} />
 
-          {/* ── Third-party services ─────────────────────────────────── */}
           <h2 className={styles.sectionHeading}>Third-party services</h2>
           <p className={styles.body}>
             <strong>PiSearch API</strong> (pisearch.joshkeegan.co.uk) — used
@@ -118,7 +125,6 @@ export default function PrivacyPage() {
 
           <hr className={styles.divider} />
 
-          {/* ── Data retention ───────────────────────────────────────── */}
           <h2 className={styles.sectionHeading}>Data retention</h2>
           <p className={styles.body}>
             All saved dates and preferences stay on your device. If you delete
@@ -128,7 +134,6 @@ export default function PrivacyPage() {
 
           <hr className={styles.divider} />
 
-          {/* ── Children ─────────────────────────────────────────────── */}
           <h2 className={styles.sectionHeading}>Children</h2>
           <p className={styles.body}>
             PiDay is suitable for all ages. No personal data is collected from
@@ -137,21 +142,16 @@ export default function PrivacyPage() {
 
           <hr className={styles.divider} />
 
-          {/* ── Contact ──────────────────────────────────────────────── */}
           <h2 className={styles.sectionHeading}>Contact</h2>
           <p className={styles.body}>
-            Questions? Email us at:{' '}
-            <a
-              href="mailto:privacy@glasscode.academy"
-              className={styles.contactEmail}
-            >
-              privacy@glasscode.academy
+            Questions? Email us at{' '}
+            <a href={`mailto:${PRIVACY_EMAIL}`} className={styles.contactEmail}>
+              {PRIVACY_EMAIL}
             </a>
           </p>
 
           <hr className={styles.divider} />
 
-          {/* ── Changes ──────────────────────────────────────────────── */}
           <h2 className={styles.sectionHeading}>Changes</h2>
           <p className={styles.body}>
             This policy may be updated occasionally. The date at the top of

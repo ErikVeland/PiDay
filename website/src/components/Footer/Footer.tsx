@@ -8,7 +8,7 @@ export default function Footer() {
       <nav className={styles.links} aria-label="Footer navigation">
         <Link href="/privacy" className={styles.link}>Privacy</Link>
         <Link href="/support" className={styles.link}>Support</Link>
-        <span className={styles.copy}>© 2026 glasscode.academy</span>
+        <span className={styles.copy}>© 2026 glasscode.academy · Made with curiosity</span>
       </nav>
     </footer>
   )

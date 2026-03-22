@@ -1,11 +1,14 @@
 # Server Setup — piday.glasscode.academy
 
-## 1. Create web root directory
+The website now runs as a standalone Next.js server so the homepage can proxy Pi lookups
+server-side and mirror the app's bundled-vs-live behavior.
+
+## 1. Create app directory
 
 Run from your local machine:
 
 ```bash
-ssh glasscode "sudo mkdir -p /var/www/piday.glasscode.academy && sudo chown $USER:$USER /var/www/piday.glasscode.academy"
+ssh glasscode "sudo mkdir -p /var/www/piday.glasscode.academy/app && sudo chown svc_epstein:svc_epstein /var/www/piday.glasscode.academy/app"
 ```
 
 ## 2. Add nginx vhost
@@ -16,10 +19,22 @@ On the server, create `/etc/nginx/sites-available/piday.glasscode.academy`:
 server {
     listen 80;
     server_name piday.glasscode.academy;
-    root /var/www/piday.glasscode.academy;
-    index index.html;
+
+    location /_next/static/ {
+        alias /var/www/piday.glasscode.academy/app/.next/static/;
+        access_log off;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
     location / {
-        try_files $uri $uri/ $uri.html =404;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
     }
 }
 ```
@@ -32,30 +47,59 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## 3. DNS
+## 3. systemd service
 
-Add a CNAME or A record for `piday.glasscode.academy` pointing to the glasscode server IP. Changes typically propagate within minutes but can take up to 48 hours.
+Create `/etc/systemd/system/piday-website.service`:
 
-## 4. SSL (after DNS propagates)
+```ini
+[Unit]
+Description=PiDay website
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/piday.glasscode.academy/app
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+Environment=PORT=3000
+Environment=HOSTNAME=0.0.0.0
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then enable it:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now piday-website.service
+sudo systemctl status piday-website.service
+```
+
+## 4. DNS
+
+Add a CNAME or A record for `piday.glasscode.academy` pointing to the glasscode server IP.
+
+## 5. SSL
 
 ```bash
 ssh glasscode "sudo certbot --nginx -d piday.glasscode.academy"
 ```
 
-## 5. Deploy
+## 6. Deploy
 
 From the `website/` directory:
 
 ```bash
 bash deploy.sh
+ssh glasscode "sudo systemctl restart piday-website.service"
 ```
 
-## 6. Pre-launch checklist
+## 7. Post-deploy smoke test
 
-- [ ] Replace `APP_STORE_URL = '#'` in `src/lib/config.ts` with the live App Store link
-- [ ] Design and commit a real `public/og.png` (1200×630) — dark background, π symbol, digit stream
-- [ ] Update contact email in `src/app/privacy/page.tsx` from placeholder to real address
-- [ ] Set `metadataBase` in `src/app/layout.tsx` to `new URL('https://piday.glasscode.academy')` for proper OG image URLs
-- [ ] DNS propagated and pointing to server
-- [ ] nginx vhost configured and reloaded
-- [ ] SSL certificate issued via certbot
+```bash
+curl -I https://piday.glasscode.academy
+curl https://piday.glasscode.academy/robots.txt
+curl "https://piday.glasscode.academy/api/pi-date?date=2026-03-22"
+```

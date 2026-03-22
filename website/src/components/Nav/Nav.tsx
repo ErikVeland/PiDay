@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { APP_STORE_URL } from '@/lib/config'
+import { APP_STORE_URL } from '@/lib/site'
 import styles from './Nav.module.scss'
 
 export default function Nav() {

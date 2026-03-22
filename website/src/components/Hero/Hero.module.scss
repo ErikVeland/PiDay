@@ -1,5 +1,3 @@
-// ─── Hero Section ─────────────────────────────────────────────────────────────
-
 .hero {
   position: relative;
   display: grid;
@@ -10,8 +8,6 @@
   background: var(--color-bg);
   padding: var(--space-10) var(--space-6) var(--space-12);
 }
-
-// ─── Background π Texture ─────────────────────────────────────────────────────
 
 .heroBg {
   position: absolute;
@@ -26,8 +22,6 @@
   pointer-events: none;
   user-select: none;
 }
-
-// ─── Left Column — Content ────────────────────────────────────────────────────
 
 .content {
   position: relative;
@@ -59,7 +53,7 @@
   font-size: 16px;
   color: var(--color-ink-muted);
   line-height: 1.75;
-  max-width: 380px;
+  max-width: 420px;
   margin-bottom: 36px;
 }
 
@@ -97,20 +91,30 @@
   cursor: default;
 }
 
-// ─── Right Column — Digit Canvas ──────────────────────────────────────────────
-
 .canvas {
   position: relative;
   z-index: 2;
 }
 
-.canvasLabel {
+.canvasHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.canvasLabel,
+.canvasMeta {
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--color-ink-faint);
-  margin-bottom: 12px;
+}
+
+.canvasMeta {
+  letter-spacing: 2px;
 }
 
 .canvasBox {
@@ -121,18 +125,15 @@
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
 }
 
-// ─── Digit Stream ─────────────────────────────────────────────────────────────
-
 .digitRow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 2px;
   line-height: 2;
   word-break: break-all;
   color: var(--color-ink-faint);
+  min-height: 52px;
 }
-
-// ─── Result Chips ─────────────────────────────────────────────────────────────
 
 .resultGrid {
   display: grid;
@@ -161,7 +162,6 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
-  // Colour applied inline via style prop (day/month/year accent)
 }
 
 .resultSub {
@@ -169,8 +169,6 @@
   font-size: 10px;
   color: var(--color-ink-faint);
 }
-
-// ─── Position Line ────────────────────────────────────────────────────────────
 
 .positionLine {
   margin-top: 14px;
@@ -183,4 +181,67 @@
 .positionBold {
   color: var(--color-ink-muted);
   font-weight: 600;
+}
+
+.loading {
+  text-align: center;
+  padding: 28px 0;
+}
+
+.loadingDots {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--color-ink-faint);
+}
+
+.errorMsg {
+  margin-top: 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-ink-muted);
+}
+
+@media (max-width: 920px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+    min-height: auto;
+    padding: var(--space-8) var(--space-4) var(--space-8);
+  }
+
+  .headline {
+    font-size: 44px;
+  }
+
+  .body {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .headline {
+    font-size: 36px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .canvasHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .canvasBox {
+    padding: 22px 18px;
+  }
+
+  .resultGrid {
+    grid-template-columns: 1fr;
+  }
 }
