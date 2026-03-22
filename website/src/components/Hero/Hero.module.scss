@@ -1,0 +1,186 @@
+// ─── Hero Section ─────────────────────────────────────────────────────────────
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  align-items: center;
+  min-height: 540px;
+  background: var(--color-bg);
+  padding: var(--space-10) var(--space-6) var(--space-12);
+}
+
+// ─── Background π Texture ─────────────────────────────────────────────────────
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.8;
+  letter-spacing: 2px;
+  color: rgba(0, 0, 0, 0.045);
+  word-break: break-all;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+// ─── Left Column — Content ────────────────────────────────────────────────────
+
+.content {
+  position: relative;
+  z-index: 2;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  margin-bottom: 20px;
+}
+
+.headline {
+  font-family: var(--font-serif);
+  font-size: 52px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-ink);
+  line-height: 1.08;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+
+.body {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--color-ink-muted);
+  line-height: 1.75;
+  max-width: 380px;
+  margin-bottom: 36px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.btnPrimary {
+  display: inline-block;
+  background: var(--color-btn-bg);
+  color: var(--color-btn-text);
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.btnSecondary {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: var(--color-ink-muted);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1px;
+  cursor: default;
+}
+
+// ─── Right Column — Digit Canvas ──────────────────────────────────────────────
+
+.canvas {
+  position: relative;
+  z-index: 2;
+}
+
+.canvasLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  margin-bottom: 12px;
+}
+
+.canvasBox {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 28px 24px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+}
+
+// ─── Digit Stream ─────────────────────────────────────────────────────────────
+
+.digitRow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  line-height: 2;
+  word-break: break-all;
+  color: var(--color-ink-faint);
+}
+
+// ─── Result Chips ─────────────────────────────────────────────────────────────
+
+.resultGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #f0efec;
+}
+
+.resultChip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.resultLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+
+.resultValue {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  // Colour applied inline via style prop (day/month/year accent)
+}
+
+.resultSub {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--color-ink-faint);
+}
+
+// ─── Position Line ────────────────────────────────────────────────────────────
+
+.positionLine {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--color-ink-faint);
+}
+
+.positionBold {
+  color: var(--color-ink-muted);
+  font-weight: 600;
+}
