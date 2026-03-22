@@ -2,12 +2,13 @@
 **Date:** 2026-03-22
 **URL:** https://piday.glasscode.academy
 **Stack:** Next.js 16 (static export) · SCSS modules · No Tailwind · SSH rsync deploy
+**Pages:** `/` (marketing) · `/privacy` (App Store requirement)
 
 ---
 
 ## Summary
 
-A single-page marketing website for the PiDay iOS app. Minimal Mathematical aesthetic — off-white ground, no decoration except the digits of π themselves. Classic serif (Georgia italic) for headlines, SF Mono for all digit sequences, system sans for body text. Three sections, no JavaScript frameworks beyond Next.js itself.
+A marketing website for the PiDay iOS app — two pages: a marketing landing page (`/`) and a privacy policy (`/privacy`, required for App Store review). Minimal Mathematical aesthetic — off-white ground, no decoration except the digits of π themselves. Classic serif (Georgia italic) for headlines, SF Mono for all digit sequences, system sans for body text. Three sections, no JavaScript frameworks beyond Next.js itself.
 
 ---
 
@@ -67,9 +68,9 @@ The hero section has the actual digits of π (hardcoded string, first ~500 digit
 **Right column (digit canvas):**
 - White card, subtle shadow, 10px border-radius
 - Label: `π — first 5 billion digits` in SF Mono caps
-- Digit stream: hardcoded excerpt of π showing a date highlighted in three colors (DD in orange, MM in teal, YYYY in blue)
-- Result row: three chips showing Day / Month / Year with their accent color and position info
-- Position line: `Position 47,832,104 · format DDMMYYYY · 5 billion digits searched`
+- Digit stream: hardcoded excerpt of π showing the example date **14 March 1995** (`14031995` in DDMMYYYY format) highlighted in three colors (DD=`14` in orange, MM=`03` in teal, YYYY=`1995` in blue). The surrounding digits are real π digits from that region.
+- Result row: three chips showing Day=14 / Month=03 / Year=1995 with their accent color and position info
+- Position line: `Position 47,832,104 · format DDMMYYYY · 5 billion digits searched` — this position is **illustrative only**. The implementer may use any plausible large number; exact accuracy is not required for a hardcoded demo excerpt.
 
 ### Section 2 — How it works
 **Background:** `#ffffff`
@@ -102,7 +103,7 @@ Each swatch is a tall card (aspect-ratio 3/4) with:
 - Theme name in SF Mono
 - `·light·` or `·dark·` tag
 
-Themes: Frost, Slate, Coppice, Ember, Aurora, Matrix (in that order)
+Themes: Frost, Slate, Coppice, Ember, Aurora, Matrix (in that order). **Matrix is confirmed real** — defined in `PiDay/Core/Domain/AppTheme.swift` as `case matrix` with phosphor green-on-black palette. The seventh theme, Custom, is intentionally omitted — it has no fixed palette (user-defined accent colour) and cannot be meaningfully represented as a swatch on the website.
 
 **Final CTA** (separated by hairline, flex row):
 - Left: `"Find your date in π."` — Georgia italic 28px + `Free · iPhone & iPad · iOS 17+` muted
@@ -121,7 +122,7 @@ Themes: Frost, Slate, Coppice, Ember, Aurora, Matrix (in that order)
 - **Framework:** Next.js 16, App Router
 - **Output:** `output: 'export'` — fully static HTML/CSS/JS, no server runtime
 - **Styling:** SCSS modules per component, no Tailwind, no CSS-in-JS
-- **Fonts:** `next/font/google` — Playfair Display as Georgia fallback for web (or system Georgia), plus `next/font/local` or system monospace stack
+- **Fonts:** System serif stack (`Georgia, 'Times New Roman', serif`) — no Google Fonts. Keeps the site fully self-contained, no external network requests, consistent with the "NO TRACKING" brand message. System monospace stack (`'SF Mono', 'Menlo', 'Courier New', monospace`) for digits.
 - **Images:** `next/image` with `unoptimized: true` (required for static export)
 - **Animations:** CSS keyframes only, no JS animation libraries
 
@@ -131,7 +132,9 @@ website/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx        — root layout, font vars, metadata
-│   │   ├── page.tsx          — single page, imports all sections
+│   │   ├── page.tsx          — marketing page, imports all sections
+│   │   ├── privacy/
+│   │   │   └── page.tsx      — privacy policy (App Store requirement)
 │   │   └── globals.scss      — reset, CSS custom properties, base typography
 │   ├── components/
 │   │   ├── Nav/
@@ -230,10 +233,49 @@ Placeholder `#` until live link is available. Stored in a single `lib/config.ts`
 
 ---
 
+## Privacy Policy Page (`/privacy`)
+
+Required by Apple App Store review. URL submitted in App Store Connect: `https://piday.glasscode.academy/privacy`
+
+### Visual Style
+Same minimal mathematical aesthetic as the main site — nav, footer, and typography identical. Body content uses Georgia serif for headings and system sans for body text. No sidebar, no TOC — just clean vertical prose.
+
+### Route
+`src/app/privacy/page.tsx` — static, no data fetching.
+
+### Content
+
+**What PiDay collects (honest summary of the app's actual behaviour):**
+
+| Data | Collected? | Notes |
+|------|-----------|-------|
+| Name, email, account | ✗ No | No account system |
+| Location | ✗ No | Never requested |
+| Contacts | ✗ No | Birthday contact picker reads only the date field, nothing is stored server-side |
+| Device identifiers | ✗ No | |
+| Usage analytics | ✗ No | No third-party SDK |
+| Date queries | Transiently | Dates outside the bundled range are sent to the PiSearch API (third-party, `pisearch.joshkeegan.co.uk`) as digit strings only — no personal metadata |
+| Saved dates | Locally only | Stored in `UserDefaults` on-device; never transmitted |
+| Preferences | Locally only | Theme, font, indexing convention — `UserDefaults` on-device |
+| Crash / diagnostics | Via Apple only | Standard iOS crash reporting through Apple's platform; no additional SDK |
+
+**Sections to include:**
+1. **Overview** — one paragraph: no account, no tracking, no ads
+2. **What we collect** — prose version of the table above
+3. **Third-party services** — PiSearch API (date digit lookup for out-of-range years); Apple (App Store, crash reporting, StoreKit review prompt)
+4. **Data retention** — all local data stays on your device; you can delete the app to remove it
+5. **Children** — the app is suitable for all ages; no data collected from anyone
+6. **Contact** — a contact email address (placeholder, to be filled before launch)
+7. **Changes** — policy may be updated; check this page for the current version; date of last update shown at top
+
+**Tone:** Plain language, no legal boilerplate walls. Short paragraphs. The same honest, human voice as the marketing copy.
+
+---
+
 ## Open Graph / SEO
 - Title: `PiDay — Find your birthday in π`
 - Description: `Your birthday is hiding somewhere in the infinite digits of pi. PiDay finds it.`
-- OG image: 1200×630, dark background, the π symbol large, a digit stream with a date highlighted — generated as a static PNG in `public/og.png`
+- OG image: 1200×630, dark background, the π symbol large, a digit stream with a date highlighted — a manually designed static PNG committed at `public/og.png` (not a build step)
 
 ---
 
