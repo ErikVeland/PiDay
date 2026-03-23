@@ -30,8 +30,8 @@
 
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 3px;
+  font-size: 12px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--color-ink-faint);
   margin-bottom: 20px;
@@ -68,10 +68,10 @@
   display: inline-block;
   background: var(--color-btn-bg);
   color: var(--color-btn-text);
-  padding: 12px 24px;
+  padding: 14px 24px;
   border-radius: 10px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.3px;
   text-decoration: none;
@@ -84,7 +84,7 @@
 
 .btnSecondary {
   font-family: var(--font-serif);
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-ink-muted);
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 1px;
@@ -107,8 +107,8 @@
 .canvasLabel,
 .canvasMeta {
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 3px;
+  font-size: 12px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--color-ink-faint);
 }
@@ -127,8 +127,8 @@
 
 .digitRow {
   font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 2px;
+  font-size: 14px;
+  letter-spacing: 1px;
   line-height: 2;
   word-break: break-all;
   color: var(--color-ink-faint);
@@ -152,29 +152,29 @@
 
 .resultLabel {
   font-family: var(--font-mono);
-  font-size: 8px;
-  letter-spacing: 2px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--color-ink-faint);
 }
 
 .resultValue {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .resultSub {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 13px;
   color: var(--color-ink-faint);
 }
 
 .positionLine {
   margin-top: 14px;
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 1px;
+  font-size: 12px;
+  letter-spacing: 0.6px;
   color: var(--color-ink-faint);
 }
 
@@ -190,8 +190,8 @@
 
 .loadingDots {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 2px;
+  font-size: 12px;
+  letter-spacing: 1.5px;
   color: var(--color-ink-faint);
 }
 

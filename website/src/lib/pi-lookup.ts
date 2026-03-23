@@ -62,7 +62,7 @@ const ALL_FORMATS: DateFormatOption[] = [
   'dmyNoLeadingZeros',
 ]
 const LIVE_LOOKUP_URL = 'https://v2.api.pisearch.joshkeegan.co.uk/api/v1/Lookup'
-const DEFAULT_EXCERPT_RADIUS = 20
+const DEFAULT_EXCERPT_RADIUS = 120
 
 export function normalizeIsoDate(input: string): string {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input)) {

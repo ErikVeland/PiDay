@@ -16,8 +16,8 @@
   display: flex;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 4px;
+  font-size: 12px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--color-ink-faint);
 
@@ -44,7 +44,7 @@
 
 .subhead {
   font-family: var(--font-serif);
-  font-size: 15px;
+  font-size: 17px;
   color: var(--color-ink-muted);
   margin-bottom: 48px;
   line-height: 1.6;
@@ -91,14 +91,14 @@
 
 .themeName {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   // color set inline based on light/dark mode
 }
 
 .themeMode {
   font-family: var(--font-mono);
-  font-size: 8px;
+  font-size: 11px;
   margin-top: 2px;
   // color set inline based on light/dark mode
 }
@@ -130,7 +130,7 @@
 
 .ctaSub {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--color-ink-muted);
 }
 
@@ -150,7 +150,7 @@
   padding: 14px 28px;
   border-radius: 10px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.3px;
   text-decoration: none;
@@ -165,7 +165,29 @@
 
 .finePrint {
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 2px;
+  font-size: 12px;
+  letter-spacing: 1.5px;
   color: var(--color-ink-faint);
+}
+
+@media (max-width: 900px) {
+  .swatchGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .ctaRight {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .swatchGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

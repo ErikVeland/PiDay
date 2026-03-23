@@ -106,9 +106,17 @@ struct PiCanvasView: View {
 
         return Group {
             if preferences.theme.isAnimated {
+                // WHY charGrid is captured here, not inside the TimelineView closure:
+                // matrixCharData only maps line colours — it does not depend on time.
+                // Building the grid inside the Canvas draw closure allocates ~600
+                // MatrixCharItem structs every 24 fps frame. Capturing it here means
+                // it is rebuilt only when layout or palette actually change (date
+                // navigation, preference changes), collapsing that cost to near-zero.
+                let charGrid: [[MatrixCharItem]] = layout.lines.map { matrixCharData(for: $0, palette: palette) }
                 TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { context in
                     matrixBodyText(
                         for: layout,
+                        charGrid: charGrid,
                         columns: metrics.columns,
                         bodyWidth: metrics.bodyWidth,
                         fontSize: metrics.bodyFontSize,
@@ -176,14 +184,11 @@ struct PiCanvasView: View {
     // where addFilter(.blur) applies ONE blur operation over every character at once,
     // then (2) a sharp pass for the crisp foreground glyphs. This collapses what was
     // ~2,400 per-character GPU blur operations down to 1 regardless of char count.
-    private func matrixBodyText(for layout: PiBodyLayout, columns: Int, bodyWidth: CGFloat, fontSize: CGFloat, palette: ThemePalette, date: Date) -> some View {
+    private func matrixBodyText(for layout: PiBodyLayout, charGrid: [[MatrixCharItem]], columns: Int, bodyWidth: CGFloat, fontSize: CGFloat, palette: ThemePalette, date: Date) -> some View {
         let time = date.timeIntervalSinceReferenceDate
         let lineH  = fontSize * 1.48   // matches PiTextMetrics.lineHeight
         let rows   = layout.lines.count
         let charWidth = bodyWidth / CGFloat(max(1, columns))
-
-        // Pre-build char grid once per frame — same colour logic as before.
-        let charGrid: [[MatrixCharItem]] = layout.lines.map { matrixCharData(for: $0, palette: palette) }
 
         // Reveal timing: negative = not yet revealed, large = fully settled.
         // revealStartDate is set in onChange(of: revealSequence) on the parent view.
@@ -193,7 +198,12 @@ struct PiCanvasView: View {
 
         let skipAnim = reduceMotion
 
-        return Canvas(opaque: false, colorMode: .linear, rendersAsynchronously: false) { ctx, _ in
+        // WHY colorMode omitted (.nonLinear default): linear color space allocates
+        // RGBA16F textures (8 bytes/px) rather than RGBA8 (4 bytes/px). For this
+        // effect the perceptual difference is invisible — phosphor glow opacities
+        // are all in a range where sRGB ≈ linear — but the doubled texture budget
+        // caused GPU memory kills on A9/A10 devices running a full-screen canvas.
+        return Canvas(opaque: false, rendersAsynchronously: false) { ctx, _ in
             // Pre-compute all char states in one sweep to avoid doing it twice.
             var infos: [MatrixCanvasCharInfo] = []
             infos.reserveCapacity(rows * columns)
@@ -213,13 +223,16 @@ struct PiCanvasView: View {
             // addFilter(.blur) applies a single GPU blur to EVERYTHING drawn in
             // this layer — one operation for all ~600 characters combined, vs the
             // old approach of one blur per character per layer (~2,400+ calls/frame).
+            // WHY radius 4.0 (was 5.5): smaller kernel = less GPU bandwidth for the
+            // offscreen blur pass. Still produces visible phosphor softening; the
+            // tighter halo better matches real CRT phosphor spread.
+            // WHY two ghost offsets (was three): dropping the farthest offset
+            // (-fontSize * 1.1, opacity * 0.32) saves ~600 draw calls/frame with
+            // no perceptible loss — the third ghost was barely visible under blur.
             ctx.drawLayer { gc in
-                gc.addFilter(.blur(radius: 5.5))
+                gc.addFilter(.blur(radius: 4.0))
                 for info in infos where info.glowOpacity > 0.01 {
                     let p = CGPoint(x: info.x + info.lateralJitter, y: info.y)
-                    // Three upward ghost offsets recreate phosphor decay trail.
-                    gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity * 0.32)),
-                            at: p.applying(.init(translationX: 0, y: -fontSize * 1.1)), anchor: .topLeading)
                     gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity * 0.52)),
                             at: p.applying(.init(translationX: 0, y: -fontSize * 0.55)), anchor: .topLeading)
                     gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity)),

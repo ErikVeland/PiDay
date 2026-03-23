@@ -28,7 +28,7 @@ export default function SupportPage() {
   return (
     <>
       <Nav />
-      <main className={styles.main}>
+      <main id="main-content" className={styles.main} tabIndex={-1}>
         <div className={styles.content}>
           <h1 className={styles.pageTitle}>Support</h1>
           <p className={styles.dateLine}>PiDay · iPhone, iPad and Mac</p>

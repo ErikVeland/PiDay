@@ -9,7 +9,7 @@
 
 .wordmark {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-ink-faint);
   font-weight: 400;
 }
@@ -22,9 +22,9 @@
 
 .link {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-ink-faint);
-  text-decoration: none;
+  text-decoration: underline;
 
   &:hover {
     color: var(--color-ink-muted);
@@ -33,6 +33,19 @@
 
 .copy {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--color-ink-faint);
+}
+
+@media (max-width: 760px) {
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .links {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
 }

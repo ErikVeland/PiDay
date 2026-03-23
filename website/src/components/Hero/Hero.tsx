@@ -28,23 +28,66 @@ export default function Hero() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const today = new Date()
-    const isoDate = [
-      String(today.getFullYear()),
-      String(today.getMonth() + 1).padStart(2, '0'),
-      String(today.getDate()).padStart(2, '0'),
-    ].join('-')
+    let cancelled = false
+    let midnightTimer: number | null = null
 
-    fetch(`/api/pi-date?date=${isoDate}`)
-      .then(async (response) => {
+    const lookupToday = async () => {
+      const isoDate = localIsoDate()
+      setLoading(true)
+      setError(false)
+
+      try {
+        const response = await fetch(`/api/pi-date?date=${isoDate}`, { cache: 'no-store' })
         if (!response.ok) {
           throw new Error('Lookup failed')
         }
-        return response.json() as Promise<HeroResult>
-      })
-      .then((data) => setResult(data))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
+
+        const data = await response.json() as HeroResult
+        if (!cancelled) {
+          setResult(data)
+        }
+      } catch {
+        if (!cancelled) {
+          setError(true)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    const scheduleMidnightRefresh = () => {
+      if (midnightTimer) {
+        window.clearTimeout(midnightTimer)
+      }
+
+      const now = new Date()
+      const nextMidnight = new Date(now)
+      nextMidnight.setHours(24, 0, 5, 0)
+      midnightTimer = window.setTimeout(async () => {
+        await lookupToday()
+        scheduleMidnightRefresh()
+      }, nextMidnight.getTime() - now.getTime())
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && result?.isoDate !== localIsoDate()) {
+        void lookupToday()
+      }
+    }
+
+    void lookupToday()
+    scheduleMidnightRefresh()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      if (midnightTimer) {
+        window.clearTimeout(midnightTimer)
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const fallbackSpans = buildDigitSpans(HERO_DIGITS, HERO_DATE.day, HERO_DATE.month, HERO_DATE.year)
@@ -59,7 +102,7 @@ export default function Hero() {
     : fallbackSpans
 
   return (
-    <section className={styles.hero}>
+    <section className={styles.hero} aria-labelledby="hero-title">
       <div className={styles.heroBg} aria-hidden="true">
         {BG_DIGITS}
       </div>
@@ -67,7 +110,7 @@ export default function Hero() {
       <div className={styles.content}>
         <p className={styles.eyebrow}>pi · 3.14159 26535… · live lookup</p>
 
-        <h1 className={styles.headline}>Today lives in pi.</h1>
+        <h1 id="hero-title" className={styles.headline}>Today lives in pi.</h1>
 
         <p className={styles.body}>
           PiDay opens to today and finds the earliest place your date appears in five
@@ -80,6 +123,7 @@ export default function Hero() {
             href={APP_STORE_URL}
             className={styles.btnPrimary}
             aria-label="Download PiDay free on the App Store"
+            rel="noopener noreferrer"
           >
             Download free
           </a>
@@ -97,7 +141,7 @@ export default function Hero() {
 
         <div className={styles.canvasBox}>
           {loading && (
-            <div className={styles.loading} aria-live="polite" aria-label="Looking up today in pi">
+            <div className={styles.loading} role="status" aria-live="polite" aria-label="Looking up today in pi">
               <span className={styles.loadingDots}>searching 5,000,000,000 digits</span>
             </div>
           )}
@@ -109,7 +153,7 @@ export default function Hero() {
               </div>
               <p className={styles.errorMsg}>
                 Today&apos;s live lookup could not load right now. Showing an illustrative
-                fallback while the app service is unavailable.
+                fallback and retrying automatically when the page becomes active again.
               </p>
               <p className={styles.positionLine}>
                 Position <strong className={styles.positionBold}>{HERO_POSITION}</strong>
@@ -124,7 +168,7 @@ export default function Hero() {
                 {liveSpans.map((span, i) => renderSpan(span, i))}
               </div>
 
-              <div className={styles.resultGrid}>
+              <div className={styles.resultGrid} aria-label="Search result summary">
                 <div className={styles.resultChip}>
                   <span className={styles.resultLabel}>Day</span>
                   <span className={styles.resultValue} style={{ color: 'var(--color-day)' }}>
@@ -163,6 +207,30 @@ export default function Hero() {
       </div>
     </section>
   )
+}
+
+function localIsoDate() {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+
+  const parts = formatter.formatToParts(new Date())
+  const year = parts.find((part) => part.type === 'year')?.value
+  const month = parts.find((part) => part.type === 'month')?.value
+  const day = parts.find((part) => part.type === 'day')?.value
+
+  if (!year || !month || !day) {
+    const today = new Date()
+    return [
+      String(today.getFullYear()),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0'),
+    ].join('-')
+  }
+
+  return `${year}-${month}-${day}`
 }
 
 function renderSpan(

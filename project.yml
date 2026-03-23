@@ -63,6 +63,9 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         INFOPLIST_KEY_CFBundleDisplayName: PiDay
+        # Required for the Mac Catalyst app bundle to have a valid App Store
+        # category and to silence Xcode's "No App Category is set" warning.
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
         INFOPLIST_KEY_NSUserNotificationUsageDescription: "PiDay sends you a reminder on Pi Day (March 14) so you can celebrate with your digits."
         # WHY even though CNContactPickerViewController doesn't require it: linking
         # ContactsUI.framework can trigger App Review automation. This description

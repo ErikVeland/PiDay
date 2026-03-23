@@ -1,0 +1,54 @@
+name: Production Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: piday-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://piday.glasscode.academy
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: website/pnpm-lock.yaml
+
+      - name: Run Unified Quality Gate
+        run: ./scripts/quality_gate.sh
+
+      - name: Configure SSH key
+        shell: bash
+        env:
+          PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          PROD_HOST: ${{ secrets.PROD_HOST || '194.195.248.217' }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$PROD_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_epstein_prod_ed25519"
+          chmod 600 "$HOME/.ssh/id_epstein_prod_ed25519"
+          ssh-keyscan -H "$PROD_HOST" >> "$HOME/.ssh/known_hosts"
+
+      - name: Deploy to production
+        env:
+          REMOTE_HOST: ${{ secrets.PROD_HOST || '194.195.248.217' }}
+          REMOTE_USER: ${{ secrets.PROD_USER || 'svc_epstein' }}
+          REMOTE_SERVICE_USER: ${{ secrets.PROD_USER || 'svc_epstein' }}
+        run: ./deploy.sh

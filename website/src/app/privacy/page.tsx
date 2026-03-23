@@ -28,7 +28,7 @@ export default function PrivacyPage() {
   return (
     <>
       <Nav />
-      <main className={styles.main}>
+      <main id="main-content" className={styles.main} tabIndex={-1}>
         <div className={styles.content}>
           <h1 className={styles.pageTitle}>Privacy Policy</h1>
           <p className={styles.dateLine}>Last updated: March 2026</p>

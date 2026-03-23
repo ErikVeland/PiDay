@@ -9,7 +9,7 @@ export const SITE_DESCRIPTION =
 export const APP_STORE_URL =
   process.env.NEXT_PUBLIC_APP_STORE_URL ?? 'https://apps.apple.com/us/search?term=PiDay'
 
-export const SUPPORT_EMAIL = 'support@glasscode.academy'
+export const SUPPORT_EMAIL = 'erik@veland.au'
 export const PRIVACY_EMAIL = 'privacy@glasscode.academy'
 export const IOS_REQUIREMENT = 'iOS 17+'
 export const APPLE_TOUCH_ICON = '/apple-touch-icon.png'

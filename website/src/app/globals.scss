@@ -5,11 +5,13 @@
   --color-bg:           #f9f8f5;
   --color-bg-white:     #ffffff;
   --color-ink:          #111111;
-  --color-ink-muted:    #777777;
-  --color-ink-faint:    #bbbbbb;
-  --color-border:       rgba(0, 0, 0, 0.07);
+  --color-ink-muted:    #4f4f4f;
+  --color-ink-faint:    #666666;
+  --color-border:       rgba(0, 0, 0, 0.14);
   --color-btn-bg:       #111111;
   --color-btn-text:     #f9f8f5;
+  --color-focus:        #0b57d0;
+  --focus-ring:         0 0 0 3px rgba(11, 87, 208, 0.22);
 
   // Digit accent colours
   --color-day:          #d95c28;
@@ -70,7 +72,47 @@ h1, h2, h3, h4, h5, h6 {
 
 a {
   color: inherit;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  text-decoration-thickness: 0.12em;
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  box-shadow: var(--focus-ring);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+main:focus {
+  outline: none;
+}
+
+.skipLink {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  z-index: 1000;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-btn-bg);
+  color: var(--color-btn-text);
   text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 0.18s ease;
+}
+
+.skipLink:focus-visible {
+  transform: translateY(0);
 }
 
 // ─── Images & SVG ────────────────────────────────────────────────────────────
