@@ -39,7 +39,7 @@ targets:
       # Xcode processes it at build time; AppIcon.appiconset provides the
       # static fallback for iOS < 26.
       - path: AppIcon.icon
-        buildPhase: resources
+        buildPhase: none
     # The widget extension must be listed as a dependency of the app so
     # XcodeGen embeds it inside the app bundle automatically.
     dependencies:
