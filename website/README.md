@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PiDay Website
 
-## Getting Started
+Marketing and support site for PiDay, built with Next.js and deployed to `https://piday.glasscode.academy`.
 
-First, run the development server:
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+./scripts/quality_gate.sh
+```
 
-## Learn More
+## Production Deploy
 
-To learn more about Next.js, take a look at the following resources:
+Local deploys and GitHub Actions both use the hardened production SSH identity:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Host: `194.195.248.217`
+- User: `svc_epstein`
+- Private key path: `~/.ssh/id_epstein_prod_ed25519`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run a manual deploy from this directory:
 
-## Deploy on Vercel
+```bash
+./deploy.sh
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Optional flags:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `--skip-quality`
+- `--skip-verify`
+- `--dry-run`
+
+## GitHub Actions Secrets
+
+The production workflow expects these repository or environment secrets:
+
+- `PROD_HOST=194.195.248.217`
+- `PROD_USER=svc_epstein`
+- `PROD_SSH_PRIVATE_KEY=<contents of ~/.ssh/id_epstein_prod_ed25519>`
+
+The workflow normalizes CRLF line endings and also accepts keys pasted with literal `\n` escapes, but the safest option is to paste the raw private key exactly as stored on disk.
+
+## Server Setup
+
+See [SERVER_SETUP.md](/Users/veland/PiDay/website/SERVER_SETUP.md) for nginx, systemd, directory ownership, SSL, and post-deploy verification.

@@ -3,12 +3,22 @@
 The website now runs as a standalone Next.js server so the homepage can proxy Pi lookups
 server-side and mirror the app's bundled-vs-live behavior.
 
+## Production SSH identity
+
+After the server hardening pass, PiDay deploys use the shared production service account:
+
+- Host: `194.195.248.217`
+- User: `svc_epstein`
+- Key path: `~/.ssh/id_epstein_prod_ed25519`
+
+If you use an SSH alias locally, it should resolve to that same host, user, and key.
+
 ## 1. Create app directory
 
 Run from your local machine:
 
 ```bash
-ssh glasscode "sudo mkdir -p /var/www/piday.glasscode.academy/app && sudo chown svc_epstein:svc_epstein /var/www/piday.glasscode.academy/app"
+ssh -i ~/.ssh/id_epstein_prod_ed25519 svc_epstein@194.195.248.217 "sudo mkdir -p /var/www/piday.glasscode.academy/app && sudo chown svc_epstein:svc_epstein /var/www/piday.glasscode.academy/app"
 ```
 
 ## 2. Add nginx vhost
@@ -85,7 +95,7 @@ Add a CNAME or A record for `piday.glasscode.academy` pointing to the glasscode 
 ## 5. SSL
 
 ```bash
-ssh glasscode "sudo certbot --nginx -d piday.glasscode.academy"
+ssh -i ~/.ssh/id_epstein_prod_ed25519 svc_epstein@194.195.248.217 "sudo certbot --nginx -d piday.glasscode.academy"
 ```
 
 ## 6. Deploy
@@ -93,9 +103,21 @@ ssh glasscode "sudo certbot --nginx -d piday.glasscode.academy"
 From the `website/` directory:
 
 ```bash
-bash deploy.sh
-ssh glasscode "sudo systemctl restart piday-website.service"
+./deploy.sh
+ssh -i ~/.ssh/id_epstein_prod_ed25519 svc_epstein@194.195.248.217 "sudo systemctl restart piday-website.service"
 ```
+
+## 6.1 GitHub Actions secrets
+
+The production workflow expects:
+
+```text
+PROD_HOST=194.195.248.217
+PROD_USER=svc_epstein
+PROD_SSH_PRIVATE_KEY=<contents of ~/.ssh/id_epstein_prod_ed25519>
+```
+
+Paste the private key exactly as stored on disk. The workflow now strips Windows carriage returns and accepts pasted `\n` escapes, but a raw paste is still preferred.
 
 ## 7. Post-deploy smoke test
 

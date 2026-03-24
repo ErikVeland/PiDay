@@ -42,8 +42,19 @@ jobs:
         run: |
           set -euo pipefail
           install -m 700 -d "$HOME/.ssh"
-          printf '%s\n' "$PROD_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_epstein_prod_ed25519"
+          if [[ -z "${PROD_SSH_PRIVATE_KEY:-}" ]]; then
+            echo "PROD_SSH_PRIVATE_KEY is not set" >&2
+            exit 1
+          fi
+
+          if [[ "$PROD_SSH_PRIVATE_KEY" == *'-----BEGIN '* ]] && [[ "$PROD_SSH_PRIVATE_KEY" == *'\\n'* ]]; then
+            printf '%b\n' "$PROD_SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/id_epstein_prod_ed25519"
+          else
+            printf '%s\n' "$PROD_SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/id_epstein_prod_ed25519"
+          fi
+
           chmod 600 "$HOME/.ssh/id_epstein_prod_ed25519"
+          ssh-keygen -y -f "$HOME/.ssh/id_epstein_prod_ed25519" >/dev/null
           ssh-keyscan -H "$PROD_HOST" >> "$HOME/.ssh/known_hosts"
 
       - name: Deploy to production

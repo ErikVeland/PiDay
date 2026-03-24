@@ -5,7 +5,7 @@ echo "▶ Installing dependencies"
 pnpm install --frozen-lockfile
 
 echo "▶ Linting"
-pnpm lint
+pnpm lint --max-warnings=0
 
 echo "▶ Running tests"
 pnpm test

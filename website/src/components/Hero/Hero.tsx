@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HERO_DATE, HERO_DIGITS, HERO_POSITION, buildDigitSpans } from '@/lib/pi-digits'
 import { APP_STORE_URL } from '@/lib/site'
 import styles from './Hero.module.scss'
@@ -26,6 +26,11 @@ export default function Hero() {
   const [result, setResult] = useState<HeroResult | null>(null)
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
+  const latestIsoDateRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    latestIsoDateRef.current = result?.isoDate ?? null
+  }, [result?.isoDate])
 
   useEffect(() => {
     let cancelled = false
@@ -72,7 +77,7 @@ export default function Hero() {
     }
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && result?.isoDate !== localIsoDate()) {
+      if (!document.hidden && latestIsoDateRef.current !== localIsoDate()) {
         void lookupToday()
       }
     }

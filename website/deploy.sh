@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REMOTE_HOST="${REMOTE_HOST:-glasscode}"
+REMOTE_HOST="${REMOTE_HOST:-194.195.248.217}"
 REMOTE_USER="${REMOTE_USER:-svc_epstein}"
 REMOTE_PORT="${REMOTE_PORT:-22}"
 REMOTE_APP_DIR="/var/www/piday.glasscode.academy/app"
@@ -33,6 +33,14 @@ remote_rsync() {
   rsync -avz --delete -e "ssh ${SSH_OPTS[*]}" "$@"
 }
 
+ssh_error_hint() {
+  cat >&2 <<EOF
+✗ Unable to connect to ${REMOTE_USER}@${REMOTE_HOST} over SSH.
+  Check that the deploy key is a valid private key, is loaded without CRLF escaping issues,
+  and that the server authorizes it for ${REMOTE_USER}.
+EOF
+}
+
 if [[ "$SKIP_QUALITY" -ne 1 ]]; then
   ./scripts/quality_gate.sh
 fi
@@ -42,13 +50,18 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   exit 0
 fi
 
+if ! remote_ssh "true"; then
+  ssh_error_hint
+  exit 1
+fi
+
 if ! remote_ssh "test -d '$REMOTE_APP_DIR' && test -w '$REMOTE_APP_DIR'"; then
   echo "✗ Remote app directory is missing or not writable: $REMOTE_HOST:$REMOTE_APP_DIR" >&2
   echo "  Create it and grant ${REMOTE_SERVICE_USER} access before retrying." >&2
   exit 1
 fi
 
-echo "▸ Deploying to glasscode..."
+echo "▸ Deploying to ${REMOTE_USER}@${REMOTE_HOST}..."
 remote_rsync ./.next/standalone/ "${REMOTE_USER}@${REMOTE_HOST}:$REMOTE_APP_DIR/"
 remote_rsync ./public/ "${REMOTE_USER}@${REMOTE_HOST}:$REMOTE_APP_DIR/public/"
 remote_rsync ./.next/static/ "${REMOTE_USER}@${REMOTE_HOST}:$REMOTE_APP_DIR/.next/static/"

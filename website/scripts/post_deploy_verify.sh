@@ -37,8 +37,7 @@ check_url() {
 
 echo "Checking production sites..."
 check_url "piday.glasscode.academy" "https://piday.glasscode.academy/" "200" '<!DOCTYPE html'
-check_url "glasscode.academy gateway" "https://glasscode.academy/health" "200" '^ok$'
-check_url "glasscode.academy API" "https://glasscode.academy/api/health" "200" '"status"[[:space:]]*:[[:space:]]*"(ok|healthy)"'
-check_url "about.glasscode.academy" "https://about.glasscode.academy/en" "200" '<!DOCTYPE html'
-check_url "epstein.academy API" "https://epstein.academy/api/health" "200" '"status"[[:space:]]*:[[:space:]]*"ok"'
+check_url "piday robots" "https://piday.glasscode.academy/robots.txt" "200" 'User-[Aa]gent: \*'
+check_url "piday support" "https://piday.glasscode.academy/support" "200" '<!DOCTYPE html'
+check_url "piday api" "https://piday.glasscode.academy/api/pi-date?date=2026-03-22" "200" '"isoDate"[[:space:]]*:[[:space:]]*"2026-03-22"'
 echo "✅ Production verification passed."

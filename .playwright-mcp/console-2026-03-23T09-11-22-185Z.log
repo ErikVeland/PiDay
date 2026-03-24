@@ -1,0 +1,60 @@
+[    1153ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=2739f7b8:4435
+[    1154ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://127.0.0.1:4173/node_modules/.vite/deps/react-router-dom.js?v=2739f7b8:4435
+[    1175ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/health/ready:0
+[    1176ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0
+[    1176ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/entities:0
+[    1304ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/investigations:0
+[    1305ms] [ERROR] Error loading investigations: SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+    at http://127.0.0.1:4173/src/client/contexts/InvestigationsContext.tsx:40:31 @ http://127.0.0.1:4173/src/client/contexts/InvestigationsContext.tsx:69
+[    1460ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/auth/me:0
+[    1533ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/investigations:0
+[    1533ms] [ERROR] Error loading investigations: SyntaxError: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+    at http://127.0.0.1:4173/src/client/contexts/InvestigationsContext.tsx:40:31 @ http://127.0.0.1:4173/src/client/contexts/InvestigationsContext.tsx:69
+[    1678ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/health/ready:0
+[    1679ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0
+[    1679ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/entities:0
+[    1679ms] [WARNING] Primary /api/entities failed, falling back to /api/subjects: TypeError: Failed to fetch
+    at executeRequest (http://127.0.0.1:4173/src/client/services/apiClient.ts:186:22)
+    at async ApiClient.executeFetchWithRetries (http://127.0.0.1:4173/src/client/services/apiClient.ts:194:22) @ http://127.0.0.1:4173/src/client/services/apiClient.ts:386
+[    1708ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/auth/me:0
+[    2089ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/subjects?page=1&limit=24&sortBy=red_flag&v=1774257083864:0
+[    2681ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0
+[    3184ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0
+[    3193ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/subjects?page=1&limit=24&sortBy=red_flag&v=1774257083864:0
+[    4295ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/subjects?page=1&limit=24&sortBy=red_flag&v=1774257083864:0
+[    5231ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/subjects?page=1&limit=24&sortBy=red_flag&v=1774257087229:0
+[    5621ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/subjects?page=1&limit=24&sortBy=red_flag&v=1774257087229:0
+[    5621ms] [WARNING] [CIRCUIT BREAKER] System under load. Suspending auto-retries. @ http://127.0.0.1:4173/src/client/services/apiClient.ts:101
+[    6915ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/subjects?page=1&limit=24&sortBy=red_flag&v=1774257087229:0
+[   34692ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/media/albums:0
+[   35796ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/emails:0
+[   38126ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/properties/stats:0
+[   38127ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/media/images?limit=24:0
+[   38127ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/flights:0
+[   38128ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:4173/api/timeline:0
+[  301707ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/health/ready' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  301708ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/health/ready:0
+[  301708ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/stats' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  301708ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/stats:0
+[  302212ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/health/ready' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  302212ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/health/ready:0
+[  302218ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/stats' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  302219ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/stats:0
+[  602249ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/health/ready' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  602250ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/health/ready:0
+[  602250ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/stats' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  602251ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/stats:0
+[  602755ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/health/ready' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  602755ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/health/ready:0
+[  602757ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/stats' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  602757ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/stats:0
+[  902775ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/health/ready:0
+[  902776ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0
+[  903287ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/health/ready' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  903288ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/health/ready:0
+[  903291ms] [ERROR] Access to fetch at 'http://127.0.0.1:3312/api/stats' from origin 'http://127.0.0.1:4173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://127.0.0.1:4173/:0
+[  903291ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://127.0.0.1:3312/api/stats:0
+[ 1203312ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/health/ready:0
+[ 1203312ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0
+[ 1203816ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/health/ready:0
+[ 1203823ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3312/api/stats:0

@@ -18,6 +18,12 @@ echo "--- Generating Xcode project ---"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 echo "Working directory: $REPO_ROOT"
+
+if ! ruby -e "require 'xcodeproj'" 2>/dev/null; then
+  echo "--- Installing missing 'xcodeproj' gem ---"
+  gem install xcodeproj --no-document --user-install || gem install xcodeproj --no-document
+fi
+
 xcodegen generate
 
 echo "--- Done ---"

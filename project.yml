@@ -3,12 +3,15 @@ options:
   bundleIdPrefix: academy.glasscode
   deploymentTarget:
     iOS: "17.0"
+    watchOS: "10.0"
+  postGenCommand: ruby scripts/fix_watch_project.rb
 settings:
   base:
     SWIFT_VERSION: "6.0"
     GENERATE_INFOPLIST_FILE: YES
     CURRENT_PROJECT_VERSION: 1
     MARKETING_VERSION: 1.0
+    DEVELOPMENT_TEAM: 54WU29TRTY
     # WHY: Xcode recommends these modern build settings. Storing them here means
     # xcodegen generate never loses them and Xcode stops prompting on every regen.
     ENABLE_USER_SCRIPT_SANDBOXING: YES
@@ -41,6 +44,7 @@ targets:
     # XcodeGen embeds it inside the app bundle automatically.
     dependencies:
       - target: PiDayWidget
+      - target: PiDayWatchApp
       - sdk: ContactsUI.framework
     settings:
       base:
@@ -78,6 +82,49 @@ targets:
     scheme:
       testTargets:
         - PiDayTests
+
+  PiDayWatchApp:
+    type: application.watchapp2
+    platform: watchOS
+    sources:
+      - path: PiDayWatchAppIcon
+        buildPhase: resources
+    dependencies:
+      - target: PiDayWatchExtension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.watchkitapp
+        PRODUCT_NAME: PiDay Watch App
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: PiDayWatchApp/Info.plist
+
+  PiDayWatchExtension:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: PiDayWatchExtension
+      - path: PiDay/Core/Domain/DateFormatOption.swift
+      - path: PiDay/Core/Domain/PiMatch.swift
+      - path: PiDay/Core/Domain/SearchFormatPreference.swift
+      - path: PiDay/Core/Data/DateStringGenerator.swift
+      - path: PiDay/Core/Data/PiIndexPayload.swift
+      - path: PiDay/Core/Repository/DefaultPiRepository.swift
+      - path: PiDay/Core/Repository/PiRepository.swift
+      - path: PiDay/Core/Repository/PiStore.swift
+      - path: PiDay/Core/Repository/PiLiveLookupService.swift
+      - path: PiDay/Design/PiPalette.swift
+      - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.watchkitapp.watchkitextension
+        PRODUCT_NAME: PiDay Watch Extension
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: PiDayWatchExtension/Info.plist
 
   # Widget extension target.
   # It shares Core/ source files with the main app rather than using a framework,

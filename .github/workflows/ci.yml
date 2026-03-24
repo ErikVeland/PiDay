@@ -27,3 +27,14 @@ jobs:
 
       - name: Run Unified Quality Gate
         run: ./scripts/quality_gate.sh
+
+  native-quality-gate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run Native Quality Gate
+        run: ./Scripts/native_quality_gate.sh
