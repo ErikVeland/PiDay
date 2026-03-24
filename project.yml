@@ -21,11 +21,6 @@ targets:
   PiDay:
     type: application
     platform: iOS
-    entitlements:
-      path: PiDay/PiDay.entitlements
-      properties:
-        com.apple.security.application-groups:
-          - group.academy.glasscode.piday
     sources:
       - path: PiDay
         excludes:
@@ -132,11 +127,6 @@ targets:
   PiDayWidget:
     type: app-extension
     platform: iOS
-    entitlements:
-      path: PiDayWidget/PiDayWidget.entitlements
-      properties:
-        com.apple.security.application-groups:
-          - group.academy.glasscode.piday
     sources:
       # The widget-specific files
       - path: PiDayWidget

@@ -1,0 +1,8 @@
+{
+  "privacy": {
+    "tracking": false,
+    "trackingDomains": [],
+    "collectedDataTypes": [],
+    "requiredReasonAPIs": []
+  }
+}

@@ -33,7 +33,19 @@ struct PiDayWidgetView: View {
                 WidgetSmallView(entry: entry)
             }
         }
+        .widgetURL(widgetURL(for: entry.date))
         .preferredColorScheme(entry.preferredColorScheme)
+    }
+    
+    // Deep link URL that opens the app to the widget's date (piday://date/YYYY-MM-DD)
+    private func widgetURL(for date: Date) -> URL? {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.dateFormat = "yyyy-MM-dd"
+        let dateString = f.string(from: date)
+        return URL(string: "piday://date/\(dateString)")
     }
 }
 

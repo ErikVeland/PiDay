@@ -22,5 +22,7 @@
 	<true/>
 	<key>WKCompanionAppBundleIdentifier</key>
 	<string>academy.glasscode.piday</string>
+	<key>WKWatchOnly</key>
+	<false/>
 </dict>
 </plist>
