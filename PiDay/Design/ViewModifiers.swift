@@ -21,7 +21,7 @@ struct NativeGlassButtonModifier: ViewModifier {
                         // the button view itself: this preserves the native liquid
                         // glass look while keeping the tappable control layer as the
                         // real hit-test target on iOS 26.x.
-                        .glassEffect(.regular, in: Circle())
+                        .glassEffect(Material.regular, in: Circle())
                         .allowsHitTesting(false)
                 }
                 .overlay(
