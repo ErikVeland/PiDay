@@ -32,6 +32,21 @@ struct PiDayApp: App {
                         accentColor: preferences.resolvedPalette.accent
                     )
                 }
+                .onOpenURL { url in
+                    guard url.scheme == "piday" else { return }
+                    // Expecting piday://date/YYYY-MM-DD — host == "date", path == "/YYYY-MM-DD"
+                    if url.host == "date" {
+                        let raw = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                        let f = DateFormatter()
+                        f.calendar = Calendar(identifier: .gregorian)
+                        f.locale = Locale(identifier: "en_US_POSIX")
+                        f.timeZone = TimeZone(secondsFromGMT: 0)
+                        f.dateFormat = "yyyy-MM-dd"
+                        if let date = f.date(from: raw) {
+                            viewModel.select(date)
+                        }
+                    }
+                }
         }
     }
 }
