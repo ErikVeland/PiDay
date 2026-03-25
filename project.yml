@@ -46,6 +46,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday
         PRODUCT_NAME: PiDay
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_ENTITLEMENTS: PiDay/PiDay.entitlements
+        INFOPLIST_FILE: PiDay/Info.plist
         # AppIcon.icon at project root provides the iOS 26 Liquid Glass adaptive icon.
         # AppIcon.appiconset in Assets.xcassets is the static fallback for iOS < 26.
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
@@ -147,14 +149,13 @@ targets:
       # The widget needs its own copy of the JSON index in its bundle.
       - path: PiDay/Resources/pi_2026_2035_index.json
         buildPhase: resources
-      - path: PiDayWidget/PrivacyInfo.xcprivacy
-        buildPhase: resources
     dependencies:
       # AppIntents is required for AdvanceDateIntent (interactive widget buttons, iOS 17).
       - sdk: AppIntents.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.PiDayWidget
+        CODE_SIGN_ENTITLEMENTS: PiDay/PiDay.entitlements
         CODE_SIGN_STYLE: Automatic
         SUPPORTS_MACCATALYST: YES
         # Override the global GENERATE_INFOPLIST_FILE=YES so Xcode uses our
