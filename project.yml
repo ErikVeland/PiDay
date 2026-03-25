@@ -86,7 +86,11 @@ targets:
     type: application
     platform: watchOS
     sources:
-      - path: PiDayWatchAppIcon/AppIcon.appiconset
+      # WHY .xcassets (not bare .appiconset): the asset catalog compiler requires
+      # a .xcassets wrapper to resolve ASSETCATALOG_COMPILER_APPICON_NAME and write
+      # CFBundleIconName into the built Info.plist. Pointing directly at an .appiconset
+      # causes ITMS-90391 (no icons found) and ITMS-90713 (missing CFBundleIconName).
+      - path: PiDayWatchAppIcon/WatchAppIcons.xcassets
         buildPhase: resources
       - path: PiDayWatchExtension
         excludes:
@@ -110,6 +114,7 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
         INFOPLIST_KEY_WKApplication: YES
         INFOPLIST_KEY_WKCompanionAppBundleIdentifier: academy.glasscode.piday
+        INFOPLIST_KEY_CFBundleDisplayName: PiDay
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         GENERATE_INFOPLIST_FILE: YES

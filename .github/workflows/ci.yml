@@ -30,16 +30,22 @@ jobs:
 
   native-quality-gate:
     runs-on: macos-15
-    env:
-      # Pin to Xcode 26 (iOS 26 SDK). Update this when a new Xcode ships.
-      # macOS 15 runners ship Xcode 26 betas and latest stable Xcode 16.x.
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install XcodeGen
-        # Pin xcodegen to avoid a broken HEAD breaking CI.
-        run: brew install xcodegen
+      # WHY maxAvailableXcodeVersion: runners ship multiple Xcode versions. Pinning
+      # a hard-coded path (e.g. /Applications/Xcode_16.4.app) breaks when the runner
+      # image updates. maxAvailableXcodeVersion always picks the newest stable Xcode
+      # that the runner image has installed, without requiring a path assumption.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen + xcodeproj gem
+        run: |
+          brew install xcodegen
+          gem install xcodeproj --no-document --user-install 2>/dev/null \
+            || gem install xcodeproj --no-document
 
       - name: Run Native Quality Gate
         run: ./Scripts/native_quality_gate.sh
