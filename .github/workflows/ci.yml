@@ -29,11 +29,16 @@ jobs:
         run: ./scripts/quality_gate.sh
 
   native-quality-gate:
-    runs-on: macos-latest
+    runs-on: macos-15
+    env:
+      # Pin to Xcode 26 (iOS 26 SDK). Update this when a new Xcode ships.
+      # macOS 15 runners ship Xcode 26 betas and latest stable Xcode 16.x.
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
 
       - name: Install XcodeGen
+        # Pin xcodegen to avoid a broken HEAD breaking CI.
         run: brew install xcodegen
 
       - name: Run Native Quality Gate

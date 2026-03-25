@@ -33,8 +33,6 @@ MVVM with SwiftUI, using `@Observable` (Swift 5.9 / iOS 17) throughout. `Observa
 ```
 PiDay/
 ├── PiDayApp.swift                  — app entry point; injects AppViewModel and PreferencesStore as @Environment
-├── ContentView.swift               — stub only (replaced by Features/Main/)
-├── CalendarPiViewModel.swift       — stub only (replaced by Features/Main/AppViewModel)
 │
 ├── Core/
 │   ├── Data/
@@ -144,7 +142,7 @@ To regenerate it:
 
 ## Configuration
 
-- Bundle ID: `com.veland.PiDay`
+- Bundle ID: `academy.glasscode.piday`
 - Deployment target: iOS 17.0
 - Supports iPhone and iPad (portrait + landscape)
 - Automatic code signing

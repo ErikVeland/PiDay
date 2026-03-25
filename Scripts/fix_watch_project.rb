@@ -11,7 +11,7 @@ WATCH_APP_TARGET_NAME = 'PiDayWatchApp'
 WATCH_EXTENSION_TARGET_NAME = 'PiDayWatchExtension'
 
 WATCH_APP_BUNDLE_ID = 'academy.glasscode.piday.watchkitapp'
-WATCH_APP_PRODUCT_NAME = 'PiDay Watch App'
+WATCH_APP_PRODUCT_NAME = 'PiDayWatchApp'
 
 def configure_build_settings(target, overrides)
   target.build_configurations.each do |config|
@@ -65,26 +65,36 @@ configure_build_settings(
   'PRODUCT_NAME' => WATCH_APP_PRODUCT_NAME,
   'ASSETCATALOG_COMPILER_APPICON_NAME' => 'AppIcon',
   'ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS' => 'YES',
+  'LSApplicationCategoryType' => 'public.app-category.education',
   'CODE_SIGN_STYLE' => 'Automatic',
   'DEVELOPMENT_TEAM' => '54WU29TRTY',
-  'GENERATE_INFOPLIST_FILE' => 'NO'
+  'GENERATE_INFOPLIST_FILE' => 'YES'
 )
 
 watch_app.build_configurations.each do |config|
-  config.build_settings['INFOPLIST_FILE'] = 'PiDayWatchApp/Info.plist'
-  # We have a physical Info.plist, so don't generate one to avoid duplicates.
-  config.build_settings['GENERATE_INFOPLIST_FILE'] = 'NO'
   config.build_settings['INFOPLIST_KEY_WKApplication'] = 'YES'
+  config.build_settings['INFOPLIST_KEY_WKCompanionAppBundleIdentifier'] = 'academy.glasscode.piday'
 end
 
 # Clean up dependencies and phases
 remove_invalid_dependencies(watch_app)
 
 remove_invalid_dependencies(ios_app)
+# Remove any existing watch-app dependency so we can re-add it cleanly.
 ios_app.dependencies.dup.each do |dependency|
   dependency.remove_from_project if dependency.target&.name == WATCH_APP_TARGET_NAME
 end
+
+# WHY two-step approach: in xcodeproj 1.27 add_dependency returns nil (changed
+# from earlier versions that returned the PBXTargetDependency). Calling
+# platform_filters= on the return value of add_dependency would crash with
+# "undefined method for NilClass". Instead we call add_dependency first and
+# then find the newly added dependency inside ios_app.dependencies, which is
+# always a live PBXTargetDependency that responds to platform_filters=.
 ios_app.add_dependency(watch_app)
+new_dependency = ios_app.dependencies.find { |d| d.target&.name == WATCH_APP_TARGET_NAME }
+abort('Could not find watch dependency after add_dependency') unless new_dependency
+new_dependency.platform_filters = ['ios']
 
 ios_embed_phase = reset_copy_phase(
   ios_app,
@@ -94,12 +104,18 @@ ios_embed_phase = reset_copy_phase(
 )
 build_file = ios_embed_phase.add_file_reference(watch_app.product_reference, true)
 build_file.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
+# WHY: Mac Catalyst apps cannot include watchOS apps. Adding this filter ensures
+# the Watch App is only embedded when building for iOS, preventing codesign
+# failures on the Mac Catalyst path.
+build_file.platform_filters = ['ios']
 
-# Ensure target attributes are set so Xcode recognizes the signing style.
+# Ensure target attributes are set so Xcode recognizes the signing style for all targets.
 project.root_object.attributes['TargetAttributes'] ||= {}
-project.root_object.attributes['TargetAttributes'][watch_app.uuid] = {
-  'DevelopmentTeam' => '54WU29TRTY',
-  'ProvisioningStyle' => 'Automatic'
-}
+project.targets.each do |target|
+  project.root_object.attributes['TargetAttributes'][target.uuid] = {
+    'DevelopmentTeam' => '54WU29TRTY',
+    'ProvisioningStyle' => 'Automatic'
+  }
+end
 
 project.save

@@ -113,20 +113,4 @@ extension View {
     }
 }
 
-#if compiler(<6.3)
-struct Glass: Equatable {
-    static let regular = Glass()
-}
 
-extension View {
-    @ViewBuilder
-    func glassEffect<S: Shape>(_ style: Glass, in shape: S) -> some View {
-        self
-    }
-    
-    @ViewBuilder
-    func glassEffect<S: Shape>(in shape: S) -> some View {
-        self
-    }
-}
-#endif
