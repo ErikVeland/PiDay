@@ -12,6 +12,7 @@ settings:
     CURRENT_PROJECT_VERSION: 1
     MARKETING_VERSION: 1.0
     DEVELOPMENT_TEAM: 54WU29TRTY
+    CODE_SIGN_STYLE: Automatic
     # WHY: Xcode recommends these modern build settings. Storing them here means
     # xcodegen generate never loses them and Xcode stops prompting on every regen.
     ENABLE_USER_SCRIPT_SANDBOXING: YES

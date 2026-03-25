@@ -187,4 +187,15 @@ ios_embed_phase = reset_copy_phase(
 build_file = ios_embed_phase.add_file_reference(watch_app.product_reference, true)
 build_file.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
 
+# Ensure target attributes are set so Xcode recognizes the signing style.
+# Without these, the 'Signing & Capabilities' tab may show 'Manual' or error
+# even if the build settings are correct.
+project.root_object.attributes['TargetAttributes'] ||= {}
+[watch_app, watch_extension].each do |target|
+  project.root_object.attributes['TargetAttributes'][target.uuid] = {
+    'DevelopmentTeam' => '54WU29TRTY',
+    'ProvisioningStyle' => 'Automatic'
+  }
+end
+
 project.save
