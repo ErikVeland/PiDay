@@ -69,7 +69,7 @@ struct PiCanvasView: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text("\(piLeadDigits(count: metrics.headerDigitCount))...")
                 .font(preferences.fontStyle.font(size: metrics.headerFontSize, weight: preferences.fontWeight.fontWeight))
-                .foregroundStyle(palette.mutedInk.opacity(0.82))
+                .foregroundStyle((palette.mutedInk.opacity(0.82) as Color))
                 .lineLimit(1)
 
             Spacer(minLength: 8)
@@ -82,7 +82,7 @@ struct PiCanvasView: View {
                 // date format is highlighted in the digit stream.
                 Text("[\(match.format.displayName)]")
                     .font(preferences.fontStyle.font(size: metrics.headerFontSize, weight: preferences.fontWeight.fontWeight))
-                    .foregroundStyle(palette.ink.opacity(0.92))
+                    .foregroundStyle((palette.ink.opacity(0.92) as Color))
                     .fixedSize(horizontal: true, vertical: false)
             } else if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
@@ -142,12 +142,12 @@ struct PiCanvasView: View {
         .mask(
             LinearGradient(
                 colors: [
-                    Color.white.opacity(0.14),
-                    Color.white.opacity(0.88),
+                    (Color.white.opacity(0.14) as Color),
+                    (Color.white.opacity(0.88) as Color),
                     Color.white,
                     Color.white,
-                    Color.white.opacity(0.88),
-                    Color.white.opacity(0.18)
+                    (Color.white.opacity(0.88) as Color),
+                    (Color.white.opacity(0.18) as Color)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -233,9 +233,9 @@ struct PiCanvasView: View {
                 gc.addFilter(.blur(radius: 4.0))
                 for info in infos where info.glowOpacity > 0.01 {
                     let p = CGPoint(x: info.x + info.lateralJitter, y: info.y)
-                    gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity * 0.52)),
+                    gc.draw(Text(String(info.char)).foregroundStyle((info.color.opacity(info.glowOpacity * 0.52) as Color)),
                             at: p.applying(.init(translationX: 0, y: -fontSize * 0.55)), anchor: .topLeading)
-                    gc.draw(Text(String(info.char)).foregroundStyle(info.color.opacity(info.glowOpacity)),
+                    gc.draw(Text(String(info.char)).foregroundStyle((info.color.opacity(info.glowOpacity) as Color)),
                             at: p, anchor: .topLeading)
                 }
             }
@@ -243,7 +243,7 @@ struct PiCanvasView: View {
             // ── Pass 2: sharp foreground characters ────────────────────────
             for info in infos where info.sharpOpacity > 0.01 {
                 ctx.draw(
-                    Text(String(info.char)).foregroundStyle(info.color.opacity(info.sharpOpacity)),
+                    Text(String(info.char)).foregroundStyle((info.color.opacity(info.sharpOpacity) as Color)),
                     at: CGPoint(x: info.x + info.lateralJitter, y: info.y),
                     anchor: .topLeading
                 )
@@ -382,13 +382,13 @@ struct PiCanvasView: View {
                 col += 1
             }
         }
-        add(line.before, ambientGreen.opacity(0.72), false)
+        add(line.before, (ambientGreen.opacity(0.72) as Color), false)
         if line.isHighlighted {
             add(line.day,   accentGreen, true)
             add(line.month, headGreen,   true)
-            add(line.year,  accentGreen.opacity(0.94), true)
+            add(line.year,  (accentGreen.opacity(0.94) as Color), true)
         }
-        add(line.after, ambientGreen.opacity(0.72), false)
+        add(line.after, (ambientGreen.opacity(0.72) as Color), false)
         return items
     }
 
@@ -401,16 +401,16 @@ struct PiCanvasView: View {
             if line.isHighlighted {
                 return partial
                 + newline
-                + Text(line.before).foregroundStyle(palette.mutedInk.opacity(0.62))
-                + Text(line.day).foregroundStyle(palette.day.opacity(revealSequence ? 1 : 0.18))
-                + Text(line.month).foregroundStyle(palette.month.opacity(revealSequence ? 1 : 0.18))
-                + Text(line.year).foregroundStyle(palette.year.opacity(revealSequence ? 1 : 0.18))
-                + Text(line.after).foregroundStyle(palette.mutedInk.opacity(0.62))
+                + Text(line.before).foregroundStyle((palette.mutedInk.opacity(0.62) as Color))
+                + Text(line.day).foregroundStyle((palette.day.opacity(revealSequence ? 1 : 0.18) as Color))
+                + Text(line.month).foregroundStyle((palette.month.opacity(revealSequence ? 1 : 0.18) as Color))
+                + Text(line.year).foregroundStyle((palette.year.opacity(revealSequence ? 1 : 0.18) as Color))
+                + Text(line.after).foregroundStyle((palette.mutedInk.opacity(0.62) as Color))
             }
 
             return partial
             + newline
-            + Text(line.before).foregroundStyle(palette.mutedInk.opacity(0.62))
+            + Text(line.before).foregroundStyle((palette.mutedInk.opacity(0.62) as Color))
         }
     }
 
@@ -680,8 +680,8 @@ struct PiCanvasView: View {
                     colors: [
                         Color.clear,
                         Color.clear,
-                        palette.background.opacity(0.55),
-                        palette.background.opacity(0.88)
+                        (palette.background.opacity(0.55) as Color),
+                        (palette.background.opacity(0.88) as Color)
                     ],
                     center: .center,
                     startRadius: 50,

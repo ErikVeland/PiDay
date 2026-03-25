@@ -44,23 +44,23 @@ extension ThemePalette {
     }
 
     func paneSecondaryText(for colorScheme: ColorScheme) -> Color {
-        colorScheme == .dark ? Color(UIColor.secondaryLabel) : ink.opacity(0.82)
+        colorScheme == .dark ? Color(UIColor.secondaryLabel) : (ink.opacity(0.82) as Color)
     }
 
     func paneTertiaryText(for colorScheme: ColorScheme) -> Color {
-        colorScheme == .dark ? Color(UIColor.tertiaryLabel) : ink.opacity(0.68)
+        colorScheme == .dark ? Color(UIColor.tertiaryLabel) : (ink.opacity(0.68) as Color)
     }
 
     func paneSurfaceFill(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark
             ? Color(UIColor.secondarySystemGroupedBackground)
-            : surface.opacity(0.94)
+            : (surface.opacity(0.94) as Color)
     }
 
     func paneBorder(for colorScheme: ColorScheme) -> Color {
         colorScheme == .dark
-            ? Color(UIColor.separator).opacity(0.72)
-            : border.opacity(0.95)
+            ? (Color(UIColor.separator).opacity(0.72) as Color)
+            : (border.opacity(0.95) as Color)
     }
 }
 

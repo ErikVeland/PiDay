@@ -220,7 +220,7 @@ struct CalendarSheetView: View {
                     )
                     .overlay(
                         Circle()
-                            .strokeBorder(isToday && summary?.isSelected != true ? palette.accent.opacity(0.55) : .clear, lineWidth: 2)
+                            .strokeBorder(isToday && summary?.isSelected != true ? (palette.accent.opacity(0.55) as Color) : .clear, lineWidth: 2)
                     )
 
                 Text("\(day.dayNumber)")
@@ -269,23 +269,23 @@ struct CalendarSheetView: View {
         if summary?.isInBundledRange == false {
             return AnyShapeStyle(
                 colorScheme == .dark
-                    ? Color.white.opacity(0.06)
-                    : palette.heatOutOfMonth.opacity(0.75)
+                    ? (Color.white.opacity(0.06) as Color)
+                    : (palette.heatOutOfMonth.opacity(0.75) as Color)
             )
         }
 
         if colorScheme == .dark {
             switch heatLevel {
             case .none:
-                return AnyShapeStyle(Color.white.opacity(0.10))
+                return AnyShapeStyle((Color.white.opacity(0.10) as Color))
             case .faint:
-                return AnyShapeStyle(palette.accent.opacity(0.18))
+                return AnyShapeStyle((palette.accent.opacity(0.18) as Color))
             case .cool:
-                return AnyShapeStyle(palette.accent.opacity(0.28))
+                return AnyShapeStyle((palette.accent.opacity(0.28) as Color))
             case .warm:
-                return AnyShapeStyle(palette.day.opacity(0.26))
+                return AnyShapeStyle((palette.day.opacity(0.26) as Color))
             case .hot:
-                return AnyShapeStyle(palette.day.opacity(0.38))
+                return AnyShapeStyle((palette.day.opacity(0.38) as Color))
             }
         }
 

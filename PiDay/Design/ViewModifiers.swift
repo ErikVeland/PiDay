@@ -21,7 +21,7 @@ struct NativeGlassButtonModifier: ViewModifier {
                         // the button view itself: this preserves the native liquid
                         // glass look while keeping the tappable control layer as the
                         // real hit-test target on iOS 26.x.
-                        .glassEffect(Material.regular, in: Circle())
+                        .glassEffect(Glass.regular, in: Circle())
                         .allowsHitTesting(false)
                 }
                 .overlay(
@@ -114,9 +114,13 @@ extension View {
 }
 
 #if compiler(<6.3)
+struct Glass: Equatable {
+    static let regular = Glass()
+}
+
 extension View {
     @ViewBuilder
-    func glassEffect<S: Shape>(_ style: Material, in shape: S) -> some View {
+    func glassEffect<S: Shape>(_ style: Glass, in shape: S) -> some View {
         self
     }
     

@@ -246,17 +246,17 @@ struct MainView: View {
                     .font(.system(size: 14, weight: .heavy, design: .rounded))
                     .tracking(0.8)
             }
-            .foregroundStyle(palette.ink.opacity(0.9))
+            .foregroundStyle((palette.ink.opacity(0.9) as Color))
             // WHY conditional halo: on dark themes the ink is light, so the outer
             // halo needs to be dark (a shadow that grounds the letterform). On light
             // themes the ink is dark, so the halo should be white (a lift highlight).
             .shadow(
-                color: preferences.effectiveColorScheme == .dark
+                color: (preferences.effectiveColorScheme == .dark
                     ? Color.black.opacity(0.60)
-                    : Color.white.opacity(0.86),
+                    : Color.white.opacity(0.86)) as Color,
                 radius: 6, y: preferences.effectiveColorScheme == .dark ? 1 : -1
             )
-            .shadow(color: palette.accent.opacity(0.2), radius: 18, y: 2)
+            .shadow(color: (palette.accent.opacity(0.2) as Color), radius: 18, y: 2)
             .overlay(
                 HStack(alignment: .firstTextBaseline, spacing: -4) {
                     Text("∏")
@@ -266,7 +266,7 @@ struct MainView: View {
                         .font(.system(size: 14, weight: .heavy, design: .rounded))
                         .tracking(0.8)
                 }
-                .foregroundStyle(Color.white.opacity(0.20))
+                .foregroundStyle((Color.white.opacity(0.20) as Color))
                 .blur(radius: 0.4)
             )
             .fixedSize()

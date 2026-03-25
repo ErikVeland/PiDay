@@ -54,9 +54,9 @@ struct ThemeSwatchButton: View {
                     // WHY darker shadow on dark tiles: dark-background tiles need more
                     // shadow intensity to lift off the sheet; light tiles stay subtle.
                     .shadow(
-                        color: Color.black.opacity(isSelected
+                        color: (Color.black.opacity(isSelected
                             ? (theme.isDark ? 0.40 : 0.22)
-                            : (theme.isDark ? 0.20 : 0.09)),
+                            : (theme.isDark ? 0.20 : 0.09)) as Color),
                         radius: isSelected ? 10 : 4,
                         y: isSelected ? 5 : 2
                     )
@@ -79,7 +79,7 @@ struct ThemeSwatchButton: View {
             // Border — thicker and accent-coloured when selected
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(
-                    isSelected ? p.accent : p.ink.opacity(0.12),
+                    (isSelected ? p.accent : p.ink.opacity(0.12)) as Color,
                     lineWidth: isSelected ? 2.5 : 1
                 )
 
@@ -94,9 +94,9 @@ struct ThemeSwatchButton: View {
                 // Mini date with colour-coded segments
                 HStack(spacing: 0) {
                     Text("14").foregroundStyle(p.day)
-                    Text("·").foregroundStyle(p.mutedInk.opacity(0.6))
+                    Text("·").foregroundStyle((p.mutedInk.opacity(0.6) as Color))
                     Text("03").foregroundStyle(p.month)
-                    Text("·").foregroundStyle(p.mutedInk.opacity(0.6))
+                    Text("·").foregroundStyle((p.mutedInk.opacity(0.6) as Color))
                     Text("26").foregroundStyle(p.year)
                 }
                 .font(.system(size: 9, weight: .bold, design: .monospaced))
@@ -144,7 +144,7 @@ struct ColourCodingRow: View {
                 .frame(width: 26, height: 26)
                 .overlay(
                     // Subtle ring ensures legibility on pure-white list backgrounds
-                    Circle().strokeBorder(Color.primary.opacity(0.07), lineWidth: 1)
+                    Circle().strokeBorder((Color.primary.opacity(0.07) as Color), lineWidth: 1)
                 )
 
             Text(label)

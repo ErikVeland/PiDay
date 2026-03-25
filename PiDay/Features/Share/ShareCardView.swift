@@ -109,7 +109,7 @@ struct ShareCardView: View {
                 // Footer
                 Text("Find your date in π")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(palette.mutedInk.opacity(0.5))
+                    .foregroundStyle((palette.mutedInk.opacity(0.5) as Color))
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(28)
@@ -141,7 +141,7 @@ struct ShareCardView: View {
             // Format label
             Text(format.displayName)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(palette.mutedInk.opacity(0.7))
+                .foregroundStyle((palette.mutedInk.opacity(0.7) as Color))
                 .padding(.bottom, 8)
 
             // Excerpt strip — shows the actual pi digits around the match
@@ -153,7 +153,7 @@ struct ShareCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(query)
                 .font(.system(size: 38, weight: .bold, design: .monospaced))
-                .foregroundStyle(palette.mutedInk.opacity(0.35))
+                .foregroundStyle((palette.mutedInk.opacity(0.35) as Color))
 
             Text("Not in the first 5 billion\ndigits of pi")
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -173,7 +173,7 @@ struct ShareCardView: View {
                 .font(.system(size: 10, weight: .heavy, design: .rounded))
                 .tracking(0.6)
         }
-        .foregroundStyle(palette.ink.opacity(0.8))
+        .foregroundStyle((palette.ink.opacity(0.8) as Color))
     }
 
     private func coloredQueryText(_ query: String, format: DateFormatOption) -> Text {
@@ -202,11 +202,11 @@ struct ShareCardView: View {
 
         let parts = format.queryParts(from: match.query, date: date)
         return (
-            Text(result.before).foregroundStyle(palette.mutedInk.opacity(0.45))
+            Text(result.before).foregroundStyle((palette.mutedInk.opacity(0.45) as Color))
             + Text(parts.day).foregroundStyle(palette.day)
             + Text(parts.month).foregroundStyle(palette.month)
             + Text(parts.year).foregroundStyle(palette.year)
-            + Text(result.after).foregroundStyle(palette.mutedInk.opacity(0.45))
+            + Text(result.after).foregroundStyle((palette.mutedInk.opacity(0.45) as Color))
         )
         .font(.system(size: 13, weight: .semibold, design: .monospaced))
     }

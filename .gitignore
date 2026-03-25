@@ -53,3 +53,8 @@ PiDay.xcodeproj/
 *.p12
 *.mobileprovision
 AuthKey_*.p8
+
+# Logs
+*.log
+build_log.txt
+test.log

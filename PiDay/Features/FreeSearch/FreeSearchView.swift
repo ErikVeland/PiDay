@@ -164,7 +164,7 @@ struct FreeSearchView: View {
                 .foregroundStyle(palette.mutedInk)
             Text("Searches the live pi index — requires internet.")
                 .font(.caption)
-                .foregroundStyle(palette.mutedInk.opacity(0.6))
+                .foregroundStyle((palette.mutedInk.opacity(0.6) as Color))
         }
         .padding(.horizontal, 4)
     }
@@ -172,8 +172,8 @@ struct FreeSearchView: View {
     // MARK: - Excerpt text builder
 
     private func excerptText(_ display: FreeSearchResult.ExcerptDisplay, highlight: String, palette: ThemePalette) -> Text {
-        Text(display.before).foregroundStyle(palette.mutedInk.opacity(0.55))
+        Text(display.before).foregroundStyle((palette.mutedInk.opacity(0.55) as Color))
         + Text(display.highlight).foregroundStyle(palette.accent).bold()
-        + Text(display.after).foregroundStyle(palette.mutedInk.opacity(0.55))
+        + Text(display.after).foregroundStyle((palette.mutedInk.opacity(0.55) as Color))
     }
 }

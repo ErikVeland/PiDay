@@ -99,7 +99,7 @@ struct SavedDatesView: View {
         VStack(spacing: 12) {
             Image(systemName: "bookmark.slash")
                 .font(.system(size: 44))
-                .foregroundStyle(preferences.resolvedPalette.mutedInk.opacity(0.4))
+                .foregroundStyle((preferences.resolvedPalette.mutedInk.opacity(0.4) as Color))
             Text("No saved dates")
                 .font(.headline)
                 .foregroundStyle(preferences.resolvedPalette.ink)

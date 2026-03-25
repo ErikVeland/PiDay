@@ -31,7 +31,7 @@ struct ResultStripView: View {
     // of which date the strip is describing without opening the detail sheet.
     private func dateLabel(palette: ThemePalette) -> some View {
         Text(shortDate(viewModel.selectedDate))
-            .foregroundStyle(palette.ink.opacity(0.85))
+            .foregroundStyle((palette.ink.opacity(0.85) as Color))
             .lineLimit(1)
     }
 
@@ -55,7 +55,7 @@ struct ResultStripView: View {
                     Text("digit ")
                     AnimatedCounterView(target: viewModel.displayedPosition(for: match.storedPosition))
                 }
-                .foregroundStyle(palette.ink.opacity(0.85))
+                .foregroundStyle((palette.ink.opacity(0.85) as Color))
 
                 // WHY conditional indicator: at "faint" level (positions past ~10 million)
                 // the heat bars are barely visible at strip size — one small lit bar against
@@ -182,7 +182,7 @@ private struct HeatIndicatorView: View {
         HStack(alignment: .bottom, spacing: 2) {
             ForEach(0..<4, id: \.self) { index in
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(index < litCount ? color : color.opacity(0.20))
+                    .fill((index < litCount ? color : color.opacity(0.20)) as Color)
                     .frame(width: 3.5, height: Self.barHeights[index])
                     .animation(.easeOut(duration: 0.25).delay(Double(index) * 0.04), value: litCount)
             }
