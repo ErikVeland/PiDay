@@ -79,27 +79,14 @@ targets:
         - PiDayTests
 
   PiDayWatchApp:
-    type: application.watchapp2
+    type: application
     platform: watchOS
     sources:
-      - path: PiDayWatchAppIcon
+      - path: PiDayWatchAppIcon/WatchAppIcon.appiconset
         buildPhase: resources
-    dependencies:
-      - target: PiDayWatchExtension
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.watchkitapp
-        PRODUCT_NAME: PiDay Watch App
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
-        GENERATE_INFOPLIST_FILE: NO
-        INFOPLIST_FILE: PiDayWatchApp/Info.plist
-
-  PiDayWatchExtension:
-    type: app-extension
-    platform: watchOS
-    sources:
       - path: PiDayWatchExtension
+        excludes:
+          - Info.plist
       - path: PiDay/Core/Domain/DateFormatOption.swift
       - path: PiDay/Core/Domain/PiMatch.swift
       - path: PiDay/Core/Domain/SearchFormatPreference.swift
@@ -114,10 +101,12 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.watchkitapp.watchkitextension
-        PRODUCT_NAME: PiDay Watch Extension
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.watchkitapp
+        PRODUCT_NAME: PiDay Watch App
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         GENERATE_INFOPLIST_FILE: NO
-        INFOPLIST_FILE: PiDayWatchExtension/Info.plist
+        INFOPLIST_FILE: PiDayWatchApp/Info.plist
 
   # Widget extension target.
   # It shares Core/ source files with the main app rather than using a framework,
