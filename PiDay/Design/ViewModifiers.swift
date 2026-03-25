@@ -26,7 +26,7 @@ struct NativeGlassButtonModifier: ViewModifier {
                 }
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.14), lineWidth: 0.75)
+                        .stroke((Color.white.opacity(0.14) as Color), lineWidth: 0.75)
                         .allowsHitTesting(false)
                 )
                 .shadow(color: palette.ink.opacity(0.10), radius: 14, y: 8)
@@ -39,7 +39,7 @@ struct NativeGlassButtonModifier: ViewModifier {
                         // WHY Color.primary.opacity: adapts to both light and dark
                         // themes instead of hardcoded white, which disappears on
                         // dark custom themes (Slate, Aurora, Coppice).
-                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
+                        .stroke((Color.primary.opacity(0.12) as Color), lineWidth: 1)
                 )
                 .shadow(color: Color.white.opacity(0.18), radius: 12, y: -1)
                 .shadow(color: palette.ink.opacity(0.12), radius: 18, y: 8)

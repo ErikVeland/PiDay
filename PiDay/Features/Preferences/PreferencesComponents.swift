@@ -194,7 +194,7 @@ struct FontStyleButton: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(isSelected ? palette.accent.opacity(0.30) : palette.paneBorder(for: colorScheme), lineWidth: 1)
+                        .stroke((isSelected ? palette.accent.opacity(0.30) : palette.paneBorder(for: colorScheme)) as Color, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -225,7 +225,7 @@ struct AppearanceModeButton: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(isSelected ? palette.accent.opacity(0.30) : palette.paneBorder(for: colorScheme), lineWidth: 1)
+                        .stroke((isSelected ? palette.accent.opacity(0.30) : palette.paneBorder(for: colorScheme)) as Color, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -283,7 +283,7 @@ struct DigitSizeButton: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 11, style: .continuous)
-                        .stroke(isSelected ? palette.accent.opacity(0.30) : palette.paneBorder(for: colorScheme), lineWidth: 1)
+                        .stroke((isSelected ? palette.accent.opacity(0.30) : palette.paneBorder(for: colorScheme)) as Color, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
