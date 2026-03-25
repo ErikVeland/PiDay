@@ -18,6 +18,9 @@ settings:
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     SWIFT_EMIT_LOC_STRINGS: YES
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    # WHY: prevents App Store Connect from holding every build in "Processing" 
+    # until export compliance is manually confirmed.
+    INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
 targets:
   PiDay:
     type: application
