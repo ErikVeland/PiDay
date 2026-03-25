@@ -5,7 +5,11 @@ import Foundation
 // because both the repository AND the live lookup service need it.
 // Keeping it here avoids duplication.
 struct DateStringGenerator {
-    private let calendar = Calendar(identifier: .gregorian)
+    private let calendar: Calendar
+
+    init(calendar: Calendar = Calendar(identifier: .gregorian)) {
+        self.calendar = calendar
+    }
 
     // Returns (format, queryString) pairs for all requested formats.
     // e.g. for March 14 2026, .ddmmyyyy → ("14032026")

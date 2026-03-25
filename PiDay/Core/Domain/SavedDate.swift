@@ -24,10 +24,10 @@ struct SavedDate: Codable, Identifiable, Equatable {
         String(format: "%04d-%02d-%02d", year, month, day)
     }
 
-    init(id: UUID = UUID(), label: String, date: Date) {
+    init(id: UUID = UUID(), label: String, date: Date, calendar: Calendar? = nil) {
         self.id = id
         self.label = label
-        let components = Self.calendar.dateComponents([.year, .month, .day], from: date)
+        let components = (calendar ?? Self.calendar).dateComponents([.year, .month, .day], from: date)
         self.year = components.year ?? 1970
         self.month = components.month ?? 1
         self.day = components.day ?? 1

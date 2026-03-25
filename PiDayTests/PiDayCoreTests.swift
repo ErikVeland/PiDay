@@ -35,7 +35,7 @@ final class PiDayCoreTests: XCTestCase {
         let components = DateComponents(calendar: calendar, year: 2026, month: 3, day: 14)
         let date = calendar.date(from: components)!
 
-        let results = DateStringGenerator().strings(for: date, formats: DateFormatOption.allCases)
+        let results = DateStringGenerator(calendar: calendar).strings(for: date, formats: DateFormatOption.allCases)
         let map = Dictionary(uniqueKeysWithValues: results)
 
         XCTAssertEqual(map[.yyyymmdd], "20260314")
@@ -50,7 +50,7 @@ final class PiDayCoreTests: XCTestCase {
         calendar.timeZone = TimeZone(identifier: "Australia/Brisbane")!
         let date = calendar.date(from: DateComponents(calendar: calendar, year: 2026, month: 3, day: 16))!
 
-        XCTAssertEqual(DateStringGenerator().isoDateString(for: date), "2026-03-16")
+        XCTAssertEqual(DateStringGenerator(calendar: calendar).isoDateString(for: date), "2026-03-16")
     }
 
     func testStructuredStoreReturnsBestMatchForPiDay() throws {
@@ -99,7 +99,7 @@ final class PiDayCoreTests: XCTestCase {
         let start = calendar.date(from: DateComponents(calendar: calendar, year: 2026, month: 1, day: 1))!
         for offset in 0..<365 {
             let date = calendar.date(byAdding: .day, value: offset, to: start)!
-            let isoDate = DateStringGenerator().isoDateString(for: date)
+            let isoDate = DateStringGenerator(calendar: calendar).isoDateString(for: date)
             XCTAssertNotNil(payload.dates[isoDate], "Missing \(isoDate) from 2026 exact-match dataset")
         }
     }
@@ -141,7 +141,7 @@ final class PiDayCoreTests: XCTestCase {
         brisbane.timeZone = TimeZone(identifier: "Australia/Brisbane")!
         let original = brisbane.date(from: DateComponents(calendar: brisbane, year: 2026, month: 3, day: 14, hour: 9))!
 
-        let saved = SavedDate(label: "Pi Day", date: original)
+        let saved = SavedDate(label: "Pi Day", date: original, calendar: brisbane)
 
         var losAngeles = Calendar(identifier: .gregorian)
         losAngeles.timeZone = TimeZone(identifier: "America/Los_Angeles")!
