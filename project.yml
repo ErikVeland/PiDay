@@ -74,10 +74,6 @@ targets:
         # category and to silence Xcode's "No App Category is set" warning.
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
         INFOPLIST_KEY_NSUserNotificationUsageDescription: "PiDay sends you a reminder on Pi Day (March 14) so you can celebrate with your digits."
-        # WHY even though CNContactPickerViewController doesn't require it: linking
-        # ContactsUI.framework can trigger App Review automation. This description
-        # makes the intent unambiguous and prevents inquiry during review.
-        INFOPLIST_KEY_NSContactsUsageDescription: "PiDay reads a contact's birthday to look it up in pi — no data is stored or transmitted."
         # Mac Catalyst lets the iOS app (and its widget) run on macOS.
         # This covers iOS, iPadOS, and macOS with a single widget extension.
         SUPPORTS_MACCATALYST: YES
@@ -109,6 +105,8 @@ targets:
       - path: PiDay/Core/Repository/PiLiveLookupService.swift
       - path: PiDay/Design/PiPalette.swift
       - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDayWatchExtension/PrivacyInfo.xcprivacy
         buildPhase: resources
     settings:
       base:

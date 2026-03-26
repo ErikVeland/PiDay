@@ -66,6 +66,9 @@ remote_rsync ./.next/standalone/ "${REMOTE_USER}@${REMOTE_HOST}:$REMOTE_APP_DIR/
 remote_rsync ./public/ "${REMOTE_USER}@${REMOTE_HOST}:$REMOTE_APP_DIR/public/"
 remote_rsync ./.next/static/ "${REMOTE_USER}@${REMOTE_HOST}:$REMOTE_APP_DIR/.next/static/"
 
+echo "▸ Restarting service..."
+remote_ssh "sudo systemctl restart piday-website.service"
+
 if [[ "$SKIP_VERIFY" -ne 1 ]]; then
   ./scripts/post_deploy_verify.sh
 fi
