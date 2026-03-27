@@ -21,6 +21,8 @@ struct PiDayWidgetView: View {
                 WidgetSmallView(entry: entry)
             case .systemMedium:
                 WidgetMediumView(entry: entry)
+            case .systemLarge:
+                WidgetLargeView(entry: entry)
             case .accessoryCircular:
                 // WHY no .containerBackground: accessory widgets use AccessoryWidgetBackground()
                 // directly inside the view. Adding .containerBackground here would double-apply it.

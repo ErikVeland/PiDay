@@ -229,6 +229,10 @@ final class AppViewModel {
         repository.excerptRadius
     }
 
+    var piStats: PiStats? {
+        repository.piStats
+    }
+
     // The exact digit string shown in the canvas — uses the best match query if found,
     // otherwise the hero-format query for the selected date.
     var exactQuery: String {

@@ -26,8 +26,10 @@ struct MainView: View {
     @State private var nextDayBounce = false
     @State private var calendarBounce = false
     @State private var detailsBounce = false
+    @State private var statsBounce = false
     @State private var confettiTrigger = 0
     @State private var showFreeSearch = false
+    @State private var showStats = false
 
     var body: some View {
         let palette = preferences.resolvedPalette
@@ -83,6 +85,13 @@ struct MainView: View {
         }
         .sheet(isPresented: $showFreeSearch) {
             FreeSearchView()
+                .environment(viewModel)
+                .environment(preferences)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showStats) {
+            StatsView(isPresented: $showStats)
                 .environment(viewModel)
                 .environment(preferences)
                 .presentationDetents([.large])
@@ -271,10 +280,14 @@ struct MainView: View {
             )
             .fixedSize()
             .opacity(0.94)
-            .allowsHitTesting(false)
-            // WHY accessibilityHidden: the wordmark is a purely decorative brand
-            // element. VoiceOver should skip it rather than announce "∏ day".
-            .accessibilityHidden(true)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                showStats = true
+                statsBounce.toggle()
+                hapticTrigger.toggle()
+            }
+            .accessibilityLabel("Show Pi Stats")
+            .accessibilityAddTraits(.isButton)
     }
 
     // MARK: - Loading overlay
@@ -312,6 +325,11 @@ struct MainView: View {
                 // horizontal, so diagonal drags still navigate days as before.
                 if abs(v) > abs(h), v < -50 {
                     showDetails = true
+                    hapticTrigger.toggle()
+                    return
+                }
+                if abs(v) > abs(h), v > 50 {
+                    showStats = true
                     hapticTrigger.toggle()
                     return
                 }

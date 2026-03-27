@@ -15,7 +15,7 @@ import java.time.YearMonth
 
 // WHY AndroidViewModel: we need Application context to open the raw resource stream.
 // This is the Kotlin/Android equivalent of iOS's @MainActor @Observable AppViewModel.
-class AppViewModel(
+class AppViewModel @JvmOverloads constructor(
     app: Application,
     private val repository: PiRepository = DefaultPiRepository()
 ) : AndroidViewModel(app) {

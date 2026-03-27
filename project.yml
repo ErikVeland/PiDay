@@ -43,6 +43,7 @@ targets:
     # XcodeGen embeds it inside the app bundle automatically.
     dependencies:
       - target: PiDayWidget
+      - target: PiDayPoster
       - target: PiDayWatchApp
         platformFilters: [ios]
       - sdk: ContactsUI.framework
@@ -157,6 +158,30 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         SUPPORTS_MACCATALYST: YES
         GENERATE_INFOPLIST_FILE: YES
+  # Poster extension target (Dynamic Wallpapers for iOS 26).
+  PiDayPoster:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PiDayPoster
+      - path: PiDay/Core/Domain/DateFormatOption.swift
+      - path: PiDay/Core/Domain/AppTheme.swift
+      - path: PiDay/Core/Domain/IndexingConvention.swift
+      - path: PiDay/Core/Domain/PiMatch.swift
+      - path: PiDay/Core/Domain/SearchFormatPreference.swift
+      - path: PiDay/Core/Data/DateStringGenerator.swift
+      - path: PiDay/Core/Data/PiIndexPayload.swift
+      - path: PiDay/Core/Repository/PiStore.swift
+      - path: PiDay/Design/PiPalette.swift
+      - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: academy.glasscode.piday.PiDayPoster
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSExtension:
+          NSExtensionPointIdentifier: com.apple.poster-extension
+          NSExtensionPrincipalClass: PiDayPoster.PosterProvider
   PiDayTests:
     type: bundle.unit-test
     platform: iOS

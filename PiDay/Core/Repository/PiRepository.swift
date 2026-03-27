@@ -16,6 +16,9 @@ protocol PiRepository {
     // The excerpt radius from index metadata (used for canvas display).
     var excerptRadius: Int { get }
 
+    // Computed statistics from the bundled index.
+    var piStats: PiStats? { get }
+
     // Load the bundled index off the main thread. Call once at startup.
     func loadBundledIndex() async throws
 

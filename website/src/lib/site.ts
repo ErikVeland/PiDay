@@ -4,10 +4,8 @@ export const SITE_TITLE = 'PiDay — Find your date in pi'
 export const SITE_DESCRIPTION =
   "The nerdiest calendar app. Every day, PiDay finds today's date in five billion digits of pi and shows you where it lands."
 
-// The live App Store id is not stored in this repo yet, so we use a real App Store
-// search URL instead of shipping dead links.
 export const APP_STORE_URL =
-  process.env.NEXT_PUBLIC_APP_STORE_URL ?? 'https://apps.apple.com/us/search?term=PiDay'
+  process.env.NEXT_PUBLIC_APP_STORE_URL ?? 'https://apps.apple.com/au/app/piday/id6760696150'
 
 export const SUPPORT_EMAIL = 'erik@veland.au'
 export const PRIVACY_EMAIL = 'privacy@glasscode.academy'

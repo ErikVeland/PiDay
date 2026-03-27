@@ -16,6 +16,7 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--color-ink-faint);
+  margin-bottom: var(--space-6);
 
   &::after {
     content: '';
@@ -26,55 +27,73 @@
   }
 }
 
-.headline {
-  margin-top: 16px;
-  margin-bottom: var(--space-8);
-  font-size: 38px;
+/* Two-column layout with explicit named areas */
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "headline headline"
+    "steps    phone";
+  column-gap: var(--space-12);
+  row-gap: var(--space-6);
+  align-items: start;
 }
 
-.stepsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0;
+.headline {
+  grid-area: headline;
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-ink);
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+}
+
+.left {
+  grid-area: steps;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Steps stacked vertically */
+
+.steps {
+  display: flex;
+  flex-direction: column;
 }
 
 .step {
-  padding: 0 var(--space-4);
-
-  &:first-child {
-    padding-left: 0;
-  }
-
-  &:last-child {
-    padding-right: 0;
-  }
+  padding: var(--space-4) 0;
 
   & + & {
-    border-left: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border);
   }
 }
 
 .stepNumber {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-ink-faint);
   letter-spacing: 1.5px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .stepVisual {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  min-height: 40px;
+  margin-bottom: 12px;
+  min-height: 36px;
 }
 
 .digitChip {
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 3px 7px;
   border-radius: 6px;
   border: 1.5px solid;
   background: transparent;
@@ -82,8 +101,8 @@
 
 .heatGrid {
   display: grid;
-  grid-template-columns: repeat(4, 18px);
-  grid-template-rows: repeat(4, 18px);
+  grid-template-columns: repeat(4, 16px);
+  grid-template-rows: repeat(4, 16px);
   gap: 3px;
 }
 
@@ -95,39 +114,59 @@
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
 }
 
 .stepTitle {
   font-family: var(--font-serif);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 400;
   font-style: italic;
   color: var(--color-ink);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .stepBody {
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 14px;
   color: var(--color-ink-muted);
   line-height: 1.65;
 }
 
-@media (max-width: 900px) {
-  .stepsGrid {
+/* Right column: screenshot */
+
+.right {
+  grid-area: phone;
+  display: flex;
+  justify-content: center;
+}
+
+.phone {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  border-radius: 44px;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 780px) {
+  .layout {
     grid-template-columns: 1fr;
-    gap: var(--space-4);
+    grid-template-areas:
+      "phone"
+      "headline"
+      "steps";
+    gap: var(--space-6);
   }
 
-  .step {
-    padding: 0;
+  .phone {
+    max-width: 220px;
   }
 
-  .step + .step {
-    border-left: 0;
-    border-top: 1px solid var(--color-border);
-    padding-top: var(--space-4);
+  .headline {
+    font-size: 28px;
   }
 }

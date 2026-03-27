@@ -14,6 +14,8 @@ struct PiDayEntry: TimelineEntry {
     // For PiDay this is midnight — the start of the day we searched.
     let date: Date
     let result: EntryResult
+    let upcomingResults: [Date: EntryResult]?
+    let stats: PiStats?
     let palette: ThemePalette
     let preferredColorScheme: ColorScheme?
 
@@ -72,6 +74,8 @@ extension PiDayEntry {
             storedPosition: 47_832,
             excerpt: WidgetExcerpt(before: "…41592653", query: "14032026", after: "897932384…")
         ),
+        upcomingResults: nil,
+        stats: nil,
         palette: AppTheme.frost.palette(),
         preferredColorScheme: nil
     )
@@ -79,6 +83,8 @@ extension PiDayEntry {
     static let notFoundSample = PiDayEntry(
         date: Calendar.current.startOfDay(for: Date()),
         result: .notFound(heroQuery: "01012099", format: .ddmmyyyy),
+        upcomingResults: nil,
+        stats: nil,
         palette: AppTheme.frost.palette(),
         preferredColorScheme: nil
     )
@@ -86,6 +92,8 @@ extension PiDayEntry {
     static let outOfRangeSample = PiDayEntry(
         date: Calendar.current.startOfDay(for: Date()),
         result: .outOfRange,
+        upcomingResults: nil,
+        stats: nil,
         palette: AppTheme.frost.palette(),
         preferredColorScheme: nil
     )

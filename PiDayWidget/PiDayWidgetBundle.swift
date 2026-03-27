@@ -32,10 +32,9 @@ struct PiDayWidget: Widget {
         }
         .configurationDisplayName("PiDay")
         .description("See where today's date appears in the digits of pi.")
-        // WHY both small and medium but not large: the large family would
-        // just show empty space. Add it when you have a richer layout ready
-        // (e.g. a week-at-a-glance heat map).
-        .supportedFamilies([.systemSmall, .systemMedium])
+        // WHY all three families: .systemSmall for a glance, .systemMedium
+        // for an excerpt, and .systemLarge for the nerdy stats dashboard.
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
         // contentMarginsDisabled() is needed if you want to draw to the full
         // widget rect (e.g. for a full-bleed gradient background).
         // With padding(14) inside each view, the default margins are fine.

@@ -84,6 +84,26 @@ struct PiDayProvider: AppIntentTimelineProvider {
         }
 
         let summary = store.summary(for: today, formats: preference.formats)
+        let stats = store.stats
+
+        // For the large widget, we pre-compute results for the next 4 days.
+        var upcoming: [Date: PiDayEntry.EntryResult] = [:]
+        for i in 1...4 {
+            if let nextDate = Calendar.current.date(byAdding: .day, value: i, to: today) {
+                let nextSummary = store.summary(for: nextDate, formats: preference.formats)
+                if let best = nextSummary.bestMatch {
+                    upcoming[nextDate] = .found(
+                        query: best.query,
+                        format: best.format,
+                        storedPosition: indexingConvention.displayPosition(for: best.storedPosition),
+                        excerpt: makeExcerpt(from: best.excerpt, query: best.query, storedPosition: best.storedPosition, excerptRadius: metadata.excerptRadius)
+                    )
+                } else {
+                    let nextHero = DateStringGenerator().strings(for: nextDate, formats: [preference.heroFormat]).first?.1 ?? ""
+                    upcoming[nextDate] = .notFound(heroQuery: nextHero, format: preference.heroFormat)
+                }
+            }
+        }
 
         if let best = summary.bestMatch {
             let excerpt = makeExcerpt(
@@ -100,6 +120,8 @@ struct PiDayProvider: AppIntentTimelineProvider {
                     storedPosition: indexingConvention.displayPosition(for: best.storedPosition),
                     excerpt: excerpt
                 ),
+                upcomingResults: upcoming,
+                stats: stats,
                 palette: palette,
                 preferredColorScheme: resolvedAppearance
             )
@@ -109,6 +131,8 @@ struct PiDayProvider: AppIntentTimelineProvider {
             return PiDayEntry(
                 date: today,
                 result: .notFound(heroQuery: heroQuery, format: preference.heroFormat),
+                upcomingResults: upcoming,
+                stats: stats,
                 palette: palette,
                 preferredColorScheme: resolvedAppearance
             )

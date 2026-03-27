@@ -31,6 +31,10 @@ final class DefaultPiRepository: PiRepository {
         store.payload?.metadata.excerptRadius ?? 20
     }
 
+    var piStats: PiStats? {
+        store.stats
+    }
+
     func loadBundledIndex() async throws {
         try await store.loadInBackground()
         cache.removeAll()

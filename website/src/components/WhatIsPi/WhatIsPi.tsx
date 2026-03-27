@@ -14,7 +14,7 @@ export default function WhatIsPi() {
         {/* Large digit display — the visual centrepiece */}
         <div className={styles.digitDisplay} aria-hidden="true">
           <span className={styles.piSymbol}>π =</span>
-          <span className={styles.piDigits}>{PI_DIGITS.slice(2)}</span>
+          <span className={styles.piDigits}>{PI_DIGITS}</span>
           <span className={styles.ellipsis}>…</span>
         </div>
 
