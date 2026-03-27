@@ -54,10 +54,11 @@ enum class DateFormatOption(val serialName: String) {
             year  = query.substring(0, 2)
         ) else QueryParts("", "", query)
 
-        DMY_NO_LEADING_ZEROS -> {
-            if (query.length < 5) return QueryParts(query, "", "")
-            val yearPart = query.takeLast(4)
-            val dayMonth = query.dropLast(4)
+        DMY_NO_LEADING_ZEROS -> if (query.length < 5) {
+            QueryParts(query, "", "")
+        } else {
+            val yearPart  = query.takeLast(4)
+            val dayMonth  = query.dropLast(4)
             val clampedLen = dayDigits.coerceIn(1, (dayMonth.length - 1).coerceAtLeast(1))
             QueryParts(
                 day   = dayMonth.take(clampedLen),

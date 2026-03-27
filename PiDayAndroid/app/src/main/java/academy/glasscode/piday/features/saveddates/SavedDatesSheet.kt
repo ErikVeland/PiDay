@@ -54,10 +54,10 @@ fun SavedDatesSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(
-                                modifier = Modifier.weight(1f).clickable(onClick = {
+                                modifier = Modifier.weight(1f).clickable {
                                     onDateSelected(saved.date)
                                     onDismiss()
-                                })
+                                }
                             ) {
                                 Text(saved.label, color = palette.onBackground)
                                 Text(
@@ -83,6 +83,3 @@ fun SavedDatesSheet(
     }
 }
 
-// Extension to make Column clickable (needed above)
-private fun Modifier.clickable(onClick: () -> Unit): Modifier =
-    this.then(androidx.compose.foundation.clickable { onClick() })
