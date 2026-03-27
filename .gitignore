@@ -25,6 +25,10 @@ fastlane/test_output
 # Claude Code (local settings, not source)
 .claude/
 
+# Android Studio / IntelliJ project files (machine-local)
+.idea/
+*.iml
+
 # Xcode local DerivedData symlink
 .derived/
 
