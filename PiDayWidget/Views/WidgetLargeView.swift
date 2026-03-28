@@ -49,14 +49,14 @@ struct WidgetLargeView: View {
                 .foregroundStyle(entry.palette.mutedInk)
 
             switch entry.result {
-            case let .found(query, format, position, excerpt):
+            case let .found(_, _, position, excerpt):
                 VStack(alignment: .leading, spacing: 4) {
                     Text("digit \(position.formatted())")
                         .font(.system(.subheadline, design: .monospaced).weight(.bold))
                         .foregroundStyle(entry.palette.accent)
 
                     (Text(excerpt.before).foregroundStyle(entry.palette.ink.opacity(0.4))
-                     + Text(excerpt.query).foregroundStyle(entry.palette.ink).weight(.bold)
+                     + Text(excerpt.query).foregroundStyle(entry.palette.ink).bold()
                      + Text(excerpt.after).foregroundStyle(entry.palette.ink.opacity(0.4)))
                     .font(.system(size: 16, design: .monospaced))
                     .lineLimit(1)

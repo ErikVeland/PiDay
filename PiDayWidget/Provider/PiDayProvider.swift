@@ -70,17 +70,38 @@ struct PiDayProvider: AppIntentTimelineProvider {
         let indexingConvention = resolveIndexingConvention()
 
         guard let store = Self.cachedStore else {
-            return PiDayEntry(date: today, result: .outOfRange, palette: palette, preferredColorScheme: resolvedAppearance)
+            return PiDayEntry(
+                date: today,
+                result: .outOfRange,
+                upcomingResults: nil,
+                stats: nil,
+                palette: palette,
+                preferredColorScheme: resolvedAppearance
+            )
         }
 
         guard let metadata = store.payload?.metadata else {
-            return PiDayEntry(date: today, result: .outOfRange, palette: palette, preferredColorScheme: resolvedAppearance)
+            return PiDayEntry(
+                date: today,
+                result: .outOfRange,
+                upcomingResults: nil,
+                stats: nil,
+                palette: palette,
+                preferredColorScheme: resolvedAppearance
+            )
         }
 
         // Check that today falls within the bundled year range.
         let year = Calendar.current.component(.year, from: today)
         guard year >= metadata.startYear && year <= metadata.endYear else {
-            return PiDayEntry(date: today, result: .outOfRange, palette: palette, preferredColorScheme: resolvedAppearance)
+            return PiDayEntry(
+                date: today,
+                result: .outOfRange,
+                upcomingResults: nil,
+                stats: nil,
+                palette: palette,
+                preferredColorScheme: resolvedAppearance
+            )
         }
 
         let summary = store.summary(for: today, formats: preference.formats)

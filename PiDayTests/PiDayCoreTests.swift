@@ -6,6 +6,7 @@ final class PiDayCoreTests: XCTestCase {
     private final class MockPiRepository: PiRepository {
         var indexedYearRange: ClosedRange<Int>? = 2026...2035
         var excerptRadius: Int = 20
+        var piStats: PiStats? = nil
         var summaryResult: DateLookupSummary
 
         init(summaryResult: DateLookupSummary) {
