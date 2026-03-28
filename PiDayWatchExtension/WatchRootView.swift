@@ -188,6 +188,12 @@ private struct WatchDetailView: View {
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(model.errorMessage == nil ? PiPalette.logoInk : PiPalette.error)
 
+                    if let funFact = model.funFact {
+                        Text(funFact)
+                            .font(.caption2)
+                            .foregroundStyle(PiPalette.mutedInk)
+                    }
+
                     if let bestMatch = model.bestMatch {
                         Text(bestMatch.excerpt)
                             .font(.system(size: 11, weight: .regular, design: .monospaced))

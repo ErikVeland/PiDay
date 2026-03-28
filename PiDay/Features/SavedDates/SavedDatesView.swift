@@ -10,6 +10,8 @@ struct SavedDatesView: View {
     @Environment(PreferencesStore.self) private var preferences
     @Binding var isPresented: Bool
     @State private var editingDate: SavedDate?
+    @State private var battlingDate: SavedDate?
+    @State private var sortOption: SavedDatesSortOption = .bestPosition
     @State private var labelDraft = ""
     @State private var labelError = false
 
@@ -40,6 +42,11 @@ struct SavedDatesView: View {
             .sheet(item: $editingDate) { date in
                 editLabelSheet(for: date)
             }
+            .sheet(item: $battlingDate) { date in
+                DateBattleView(anchorDate: viewModel.selectedDate, initialOpponent: date.date)
+                    .environment(viewModel)
+                    .environment(preferences)
+            }
         }
     }
 
@@ -47,52 +54,98 @@ struct SavedDatesView: View {
 
     private var dateList: some View {
         List {
-            ForEach(viewModel.savedDatesStore.dates) { saved in
-                savedDateRow(saved)
+            Section {
+                Picker("Sort", selection: $sortOption) {
+                    ForEach(SavedDatesSortOption.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
-            .onDelete { indexSet in
-                // WHY collect first: delete() mutates the array immediately.
-                // Deleting one-by-one shifts subsequent indices, causing wrong
-                // items to be deleted or an out-of-bounds crash when EditButton
-                // delivers a multi-index set.
-                let toDelete = indexSet.map { viewModel.savedDatesStore.dates[$0] }
-                toDelete.forEach { viewModel.savedDatesStore.delete($0) }
+
+            Section("Leaderboard") {
+                ForEach(viewModel.rankedSavedDates(sortedBy: sortOption)) { ranked in
+                    savedDateRow(ranked)
+                }
+                .onDelete { indexSet in
+                    let current = viewModel.rankedSavedDates(sortedBy: sortOption)
+                    let toDelete = indexSet.map { current[$0].savedDate }
+                    toDelete.forEach { viewModel.savedDatesStore.delete($0) }
+                }
             }
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
     }
 
-    private func savedDateRow(_ saved: SavedDate) -> some View {
-        Button {
-            viewModel.select(saved.date)
-            isPresented = false
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(saved.label)
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(preferences.resolvedPalette.ink)
-                    Text(saved.date, style: .date)
-                        .font(.subheadline)
-                        .foregroundStyle(preferences.resolvedPalette.mutedInk)
-                }
+    private func savedDateRow(_ ranked: RankedSavedDate) -> some View {
+        HStack(spacing: 12) {
+            Button {
+                viewModel.select(ranked.savedDate.date)
+                isPresented = false
+            } label: {
+                HStack(spacing: 12) {
+                    if let rank = ranked.rank, sortOption == .bestPosition {
+                        Text("#\(rank)")
+                            .font(.subheadline.weight(.black))
+                            .foregroundStyle(preferences.resolvedPalette.accent)
+                            .frame(width: 30, alignment: .leading)
+                    }
 
-                Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(ranked.savedDate.label)
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(preferences.resolvedPalette.ink)
+                        Text(ranked.savedDate.date, style: .date)
+                            .font(.subheadline)
+                            .foregroundStyle(preferences.resolvedPalette.mutedInk)
 
-                // Edit label button
-                Button {
-                    labelDraft = saved.label
-                    editingDate = saved
-                } label: {
-                    Image(systemName: "pencil")
-                        .font(.subheadline)
-                        .foregroundStyle(preferences.resolvedPalette.mutedInk)
+                        if let position = ranked.bestStoredPosition {
+                            HStack(spacing: 8) {
+                                Text("digit \(viewModel.displayedPosition(for: position).formatted())")
+                                if let percentile = ranked.percentileLabel {
+                                    Text(percentile)
+                                }
+                                if let format = ranked.bestFormat {
+                                    Text(format.displayName)
+                                }
+                            }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(preferences.resolvedPalette.accent)
+                        } else {
+                            Text("No exact bundled hit")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(preferences.resolvedPalette.mutedInk)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
                 }
-                .buttonStyle(.plain)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+
+            Button {
+                battlingDate = ranked.savedDate
+            } label: {
+                Image(systemName: "bolt.shield")
+                    .font(.subheadline)
+                    .foregroundStyle(preferences.resolvedPalette.accent)
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                labelDraft = ranked.savedDate.label
+                editingDate = ranked.savedDate
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.subheadline)
+                    .foregroundStyle(preferences.resolvedPalette.mutedInk)
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {

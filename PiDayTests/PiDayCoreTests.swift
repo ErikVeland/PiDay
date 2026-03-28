@@ -137,6 +137,67 @@ final class PiDayCoreTests: XCTestCase {
         XCTAssertEqual(IndexingConvention.zeroBased.displayPosition(for: 314), 313)
     }
 
+    func testPiDelightCopyRarityLabelProducesPercentile() {
+        XCTAssertEqual(PiDelightCopy.rarityLabel(for: 100, among: [100, 200, 300, 400]), "Top 25%")
+        XCTAssertEqual(PiDelightCopy.rarityLabel(for: nil, among: [1, 2, 3]), "Unranked")
+    }
+
+    func testPiDelightCopySupportsFreeSearchEasterEggs() {
+        XCTAssertEqual(PiDelightCopy.freeSearchReaction(for: "42"), "Deep thought approves.")
+        XCTAssertEqual(PiDelightCopy.freeSearchReaction(for: "8675309"), "Jenny mode unlocked.")
+        XCTAssertNil(PiDelightCopy.freeSearchReaction(for: "123"))
+    }
+
+    @MainActor
+    func testDateBattleWinnerAndMarginAreComputedCorrectly() async {
+        let leftSummary = DateLookupSummary(
+            isoDate: "2026-03-14",
+            matches: [PiMatchResult(query: "14032026", format: .ddmmyyyy, found: true, storedPosition: 100, excerpt: "14032026")],
+            bestMatch: BestPiMatch(format: .ddmmyyyy, query: "14032026", storedPosition: 100, excerpt: "14032026"),
+            source: .bundled,
+            errorMessage: nil
+        )
+        let rightSummary = DateLookupSummary(
+            isoDate: "2026-03-15",
+            matches: [PiMatchResult(query: "15032026", format: .ddmmyyyy, found: true, storedPosition: 250, excerpt: "15032026")],
+            bestMatch: BestPiMatch(format: .ddmmyyyy, query: "15032026", storedPosition: 250, excerpt: "15032026"),
+            source: .bundled,
+            errorMessage: nil
+        )
+
+        let repository = MockPiRepository(summaryResult: leftSummary)
+        repository.piStats = PiStats(
+            earliestMatch: nil,
+            latestMatch: nil,
+            averagePosition: 0,
+            formatSuccessRate: [:],
+            totalDatesMatched: 0,
+            maxDigitReached: 0,
+            piDayStats: [:],
+            bestDatePositions: [100, 250, 500],
+            topEarliestDates: [],
+            luckiestMonth: nil,
+            hardestMonth: nil,
+            luckiestDayOfMonth: nil,
+            hardestDayOfMonth: nil,
+            biggestFormatUpset: nil,
+            longestRepeatRun: nil,
+            mostUniqueDigits: nil
+        )
+        let viewModel = AppViewModel(repository: repository)
+
+        let battle = viewModel.compareDates(
+            leftDate: Date(),
+            leftSummary: leftSummary,
+            rightDate: Date().addingTimeInterval(86_400),
+            rightSummary: rightSummary
+        )
+
+        XCTAssertEqual(battle.winner, .left)
+        XCTAssertEqual(battle.winningMargin, 150)
+        XCTAssertTrue(battle.verdict.contains("Left date"))
+    }
+
     func testSavedDateMatchesAcrossTimeZones() {
         var brisbane = Calendar(identifier: .gregorian)
         brisbane.timeZone = TimeZone(identifier: "Australia/Brisbane")!
@@ -168,6 +229,42 @@ final class PiDayCoreTests: XCTestCase {
 
         XCTAssertEqual(decoded.label, "Birthday")
         XCTAssertEqual(decoded.isoDate, "2025-03-14")
+    }
+
+    @MainActor
+    func testRankedSavedDatesSortByBestPosition() {
+        let summary = DateLookupSummary(
+            isoDate: "2026-03-14",
+            matches: [PiMatchResult(query: "14032026", format: .ddmmyyyy, found: true, storedPosition: 100, excerpt: "14032026")],
+            bestMatch: BestPiMatch(format: .ddmmyyyy, query: "14032026", storedPosition: 100, excerpt: "14032026"),
+            source: .bundled,
+            errorMessage: nil
+        )
+        let repository = MockPiRepository(summaryResult: summary)
+        repository.piStats = PiStats(
+            earliestMatch: nil,
+            latestMatch: nil,
+            averagePosition: 0,
+            formatSuccessRate: [:],
+            totalDatesMatched: 0,
+            maxDigitReached: 0,
+            piDayStats: [:],
+            bestDatePositions: [100, 250, 500],
+            topEarliestDates: [],
+            luckiestMonth: nil,
+            hardestMonth: nil,
+            luckiestDayOfMonth: nil,
+            hardestDayOfMonth: nil,
+            biggestFormatUpset: nil,
+            longestRepeatRun: nil,
+            mostUniqueDigits: nil
+        )
+        let viewModel = AppViewModel(repository: repository)
+        viewModel.savedDatesStore.upsert(SavedDate(label: "B", date: Date()))
+        viewModel.savedDatesStore.upsert(SavedDate(label: "A", date: Date().addingTimeInterval(86_400)))
+
+        let ranked = viewModel.rankedSavedDates(sortedBy: .label)
+        XCTAssertEqual(ranked.map { $0.savedDate.label }, ["A", "B"])
     }
 
     @MainActor

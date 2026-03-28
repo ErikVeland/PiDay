@@ -82,8 +82,12 @@ struct WidgetLargeView: View {
 
             if let stats = entry.stats {
                 VStack(alignment: .leading, spacing: 8) {
-                    statMiniRow(title: "Dates Matched", value: "\(stats.totalDatesMatched)")
-                    statMiniRow(title: "Avg Position", value: "\(Int(stats.averagePosition).formatted())")
+                    if let luckiestMonth = stats.luckiestMonth {
+                        statMiniRow(title: "Luckiest Month", value: monthName(luckiestMonth.month))
+                    }
+                    if let topDate = stats.topEarliestDates.first {
+                        statMiniRow(title: "Best Date", value: shortIso(topDate.date))
+                    }
                 }
             } else {
                 Text("Stats loading…")
@@ -145,5 +149,17 @@ struct WidgetLargeView: View {
             .background(RoundedRectangle(cornerRadius: 8).fill(entry.palette.ink.opacity(0.05)))
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func monthName(_ month: Int) -> String {
+        let names = Calendar(identifier: .gregorian).monthSymbols
+        guard month >= 1, month <= names.count else { return "\(month)" }
+        return names[month - 1]
+    }
+
+    private func shortIso(_ isoDate: String) -> String {
+        let parts = isoDate.split(separator: "-")
+        guard parts.count == 3 else { return isoDate }
+        return "\(parts[1])/\(parts[2])"
     }
 }

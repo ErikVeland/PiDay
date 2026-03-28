@@ -115,6 +115,12 @@ struct FreeSearchView: View {
 
             Divider()
 
+            if let easterEgg = searchVM.easterEggMessage {
+                Text(easterEgg)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(palette.accent)
+            }
+
             Button {
                 UIPasteboard.general.string = "\(result.query) at digit \(result.storedPosition)"
                 didCopy = true
@@ -142,6 +148,11 @@ struct FreeSearchView: View {
                 .font(.subheadline)
                 .foregroundStyle(palette.mutedInk)
                 .fixedSize(horizontal: false, vertical: true)
+            if let easterEgg = searchVM.easterEggMessage {
+                Text(easterEgg)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(palette.accent)
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

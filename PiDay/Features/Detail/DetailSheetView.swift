@@ -12,6 +12,8 @@ struct DetailSheetView: View {
     @Binding var isPresented: Bool
     @State private var showSavedDates = false
     @State private var showFreeSearch = false
+    @State private var showBattle = false
+    @State private var showShareOptions = false
     @State private var navigateToPreferences = false
 
     var body: some View {
@@ -46,10 +48,9 @@ struct DetailSheetView: View {
                     // a bookmark toggle; a second one in this row was redundant and
                     // appeared as a blank/icon-only button that confused users.
                     HStack(spacing: 8) {
-                        ShareLink(
-                            item: viewModel.shareableCard(palette: palette),
-                            preview: SharePreview("PiDay", image: Image(systemName: "chart.bar.doc.horizontal"))
-                        ) {
+                        Button {
+                            showShareOptions = true
+                        } label: {
                             Label("Share", systemImage: "square.and.arrow.up")
                                 .font(.subheadline.weight(.semibold))
                                 .lineLimit(1)
@@ -60,6 +61,16 @@ struct DetailSheetView: View {
                         .tint(palette.accent)
                         .disabled(viewModel.isLoading || viewModel.errorMessage != nil)
 
+                        Button { showBattle = true } label: {
+                            Label("Battle", systemImage: "bolt.shield")
+                                .font(.subheadline.weight(.semibold))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(palette.accent)
+
                         Button { showFreeSearch = true } label: {
                             Label("Search", systemImage: "magnifyingglass")
                                 .font(.subheadline.weight(.semibold))
@@ -69,16 +80,18 @@ struct DetailSheetView: View {
                         }
                         .buttonStyle(.bordered)
                         .tint(palette.accent)
+                    }
 
-                        Button { showSavedDates = true } label: {
-                            Label("Saved", systemImage: "bookmark")
-                                .font(.subheadline.weight(.semibold))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(palette.accent)
+                    Button { showSavedDates = true } label: {
+                        Label("Saved Dates Leaderboard", systemImage: "bookmark")
+                            .font(.subheadline.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(palette.accent)
+
+                    if let fact = viewModel.selectedDateFunFact {
+                        delightCard(message: fact, palette: palette)
                     }
 
                     Button {
@@ -145,6 +158,19 @@ struct DetailSheetView: View {
                 SavedDatesView(isPresented: $showSavedDates)
                     .environment(viewModel)
                     .environment(preferences)
+            }
+            .sheet(isPresented: $showBattle) {
+                DateBattleView(anchorDate: viewModel.selectedDate)
+                    .environment(viewModel)
+                    .environment(preferences)
+            }
+            .sheet(isPresented: $showShareOptions) {
+                ShareOptionsSheet(
+                    date: viewModel.selectedDate,
+                    classicCard: viewModel.shareableCard(style: .classic, palette: palette),
+                    nerdCard: viewModel.shareableCard(style: .nerd, palette: palette)
+                )
+                .environment(preferences)
             }
             .sheet(isPresented: $showFreeSearch) {
                 FreeSearchView()
@@ -281,6 +307,21 @@ struct DetailSheetView: View {
             .disabled(viewModel.notificationAuthState == .authorized)
         }
         .compactSectionCard()
+    }
+
+    private func delightCard(message: String, palette: ThemePalette) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Pi Whisper", systemImage: "sparkles")
+                .font(.headline)
+                .foregroundStyle(palette.panePrimaryText(for: colorScheme))
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard(cornerRadius: 20, palette: palette)
     }
 
     private var reminderStatusText: String {

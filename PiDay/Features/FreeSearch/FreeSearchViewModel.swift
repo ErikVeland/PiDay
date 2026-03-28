@@ -29,6 +29,7 @@ final class FreeSearchViewModel {
     var isLoading = false
     var errorMessage: String?
     var hasSearched = false
+    var easterEggMessage: String?
 
     // WHY no deinit cancellation: @Observable macro-expanded properties can't be
     // accessed from nonisolated deinit in Swift 6. The [weak self] capture in the
@@ -56,6 +57,7 @@ final class FreeSearchViewModel {
         result = nil
         errorMessage = nil
         hasSearched = false
+        easterEggMessage = PiDelightCopy.freeSearchReaction(for: digits)
 
         guard digits.count >= 3 else {
             isLoading = false
@@ -90,6 +92,7 @@ final class FreeSearchViewModel {
                     fullExcerpt: found.excerpt
                 )
                 errorMessage = nil
+                easterEggMessage = PiDelightCopy.freeSearchReaction(for: digits)
             } else {
                 result = nil  // not found — view shows the "not found" state
             }

@@ -30,6 +30,7 @@ struct MainView: View {
     @State private var confettiTrigger = 0
     @State private var showFreeSearch = false
     @State private var showStats = false
+    @State private var showShareOptions = false
 
     var body: some View {
         let palette = preferences.resolvedPalette
@@ -49,7 +50,10 @@ struct MainView: View {
 
             VStack(spacing: 0) {
                 Spacer()
-                ResultStripView(onFreeSearch: { showFreeSearch = true })
+                ResultStripView(
+                    onFreeSearch: { showFreeSearch = true },
+                    onShare: { showShareOptions = true }
+                )
                     .padding(.bottom, 6)
                 bottomControls
                     .padding(.bottom, 18)
@@ -96,6 +100,14 @@ struct MainView: View {
                 .environment(preferences)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showShareOptions) {
+            ShareOptionsSheet(
+                date: viewModel.selectedDate,
+                classicCard: viewModel.shareableCard(style: .classic, palette: preferences.resolvedPalette),
+                nerdCard: viewModel.shareableCard(style: .nerd, palette: preferences.resolvedPalette)
+            )
+            .environment(preferences)
         }
         // Restart the reveal animation whenever the target query changes.
         // WHY reduceMotion check: users who opt out of motion get an instant
@@ -227,9 +239,9 @@ struct MainView: View {
     }
 
     private func floatingShareButton(size: CGFloat) -> some View {
-        // ShareLink(item:) with a Transferable renders a PNG share card via ImageRenderer.
-        // The plain-text fallback lives in detailShareText (still used in DetailSheetView copy).
-        ShareLink(item: viewModel.shareableCard(palette: preferences.resolvedPalette), preview: SharePreview("PiDay", image: Image(systemName: "chart.bar.doc.horizontal"))) {
+        Button {
+            showShareOptions = true
+        } label: {
             Image(systemName: "square.and.arrow.up")
                 .font(.headline.weight(.bold))
                 .frame(width: size, height: size)

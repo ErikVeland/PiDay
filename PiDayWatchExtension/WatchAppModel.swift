@@ -4,6 +4,9 @@ import Observation
 @MainActor
 @Observable
 final class WatchAppModel {
+    private static let indexingConventionKey = "academy.glasscode.piday.indexingConvention"
+    private static let appGroupID = "group.academy.glasscode.piday"
+
     var selectedDate: Date
     var lookupSummary: DateLookupSummary?
     var isLoading = false
@@ -49,9 +52,17 @@ final class WatchAppModel {
             return errorMessage
         }
         if let bestMatch {
-            return "\(bestMatch.format.displayName) at digit \(bestMatch.storedPosition)"
+            let rarity = PiDelightCopy.rarityLabel(
+                for: bestMatch.storedPosition,
+                among: repository.piStats?.bestDatePositions ?? []
+            )
+            return "\(bestMatch.format.displayName) at digit \(displayedPosition(for: bestMatch.storedPosition)) · \(rarity)"
         }
         return "No exact \(searchPreference.summary) hit"
+    }
+
+    var funFact: String? {
+        PiDelightCopy.detailFact(for: selectedDate, bestMatch: bestMatch)
     }
 
     func loadIfNeeded() async {
@@ -92,5 +103,14 @@ final class WatchAppModel {
         lookupSummary = summary
         errorMessage = summary.errorMessage
         isLoading = false
+    }
+
+    private func displayedPosition(for storedPosition: Int) -> Int {
+        indexingConventionRawValue == "zeroBased" ? storedPosition - 1 : storedPosition
+    }
+
+    private var indexingConventionRawValue: String {
+        let defaults = UserDefaults(suiteName: Self.appGroupID) ?? .standard
+        return defaults.string(forKey: Self.indexingConventionKey) ?? "oneBased"
     }
 }

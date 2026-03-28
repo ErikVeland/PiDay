@@ -12,6 +12,7 @@ struct ResultStripView: View {
     @Environment(PreferencesStore.self) private var preferences
     @Environment(\.colorScheme) private var colorScheme
     let onFreeSearch: () -> Void
+    let onShare: () -> Void
 
     var body: some View {
         let palette = preferences.resolvedPalette
@@ -98,10 +99,9 @@ struct ResultStripView: View {
         }
 
         if let match = viewModel.bestMatch {
-            ShareLink(
-                item: viewModel.shareableCard(palette: palette),
-                preview: SharePreview("PiDay", image: Image(systemName: "chart.bar.doc.horizontal"))
-            ) {
+            Button {
+                onShare()
+            } label: {
                 Label("Share", systemImage: "square.and.arrow.up")
             }
 

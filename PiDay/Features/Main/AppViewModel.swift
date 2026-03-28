@@ -1,6 +1,32 @@
 import Foundation
 import Observation
 
+enum SavedDatesSortOption: String, CaseIterable, Identifiable {
+    case bestPosition
+    case label
+    case calendarDate
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .bestPosition: return "Best Position"
+        case .label: return "Label"
+        case .calendarDate: return "Calendar Date"
+        }
+    }
+}
+
+struct RankedSavedDate: Identifiable, Equatable {
+    let savedDate: SavedDate
+    let rank: Int?
+    let bestStoredPosition: Int?
+    let bestFormat: DateFormatOption?
+    let percentileLabel: String?
+
+    var id: UUID { savedDate.id }
+}
+
 // WHY: @Observable (Swift 5.9 / iOS 17) replaces ObservableObject + @Published.
 //
 // The key benefit is fine-grained observation: SwiftUI only re-renders a View when
@@ -210,15 +236,7 @@ final class AppViewModel {
     // WHY palette parameter: AppViewModel has no reference to PreferencesStore.
     // The caller (a View) already holds the resolved palette and passes it through.
     func shareableCard(palette: ThemePalette) -> ShareableCard {
-        ShareableCard(
-            date: selectedDate,
-            bestMatch: bestMatch,
-            query: exactQuery,
-            format: activeFormat,
-            displayedPosition: bestMatch.map { displayedPosition(for: $0.storedPosition) },
-            excerptRadius: excerptRadius,
-            palette: palette
-        )
+        shareableCard(style: .classic, palette: palette)
     }
 
     var matchResults: [PiMatchResult] {
@@ -287,6 +305,14 @@ final class AppViewModel {
             return "\(dateString) is outside the search range (\(indexedYearRange))."
         }
         return "\(dateString) does not appear as an exact \(searchPreference.summary) sequence in the first 5 billion digits of pi."
+    }
+
+    var selectedDateFunFact: String? {
+        PiDelightCopy.detailFact(for: selectedDate, bestMatch: bestMatch)
+    }
+
+    var rankedSavedDates: [RankedSavedDate] {
+        rankedSavedDates(sortedBy: .bestPosition)
     }
 
     // MARK: - User actions
@@ -406,6 +432,146 @@ final class AppViewModel {
     func displayedPosition(for result: PiMatchResult) -> Int? {
         guard let stored = result.storedPosition else { return nil }
         return displayedPosition(for: stored)
+    }
+
+    func rankedSavedDates(sortedBy sort: SavedDatesSortOption) -> [RankedSavedDate] {
+        let allPositions = repository.piStats?.bestDatePositions ?? []
+        let generator = DateStringGenerator(calendar: calendar)
+
+        let ranked = savedDatesStore.dates.map { saved -> RankedSavedDate in
+            let summary = repository.bundledSummary(for: saved.date, formats: SearchFormatPreference.all.formats)
+            let best = summary.bestMatch
+            let percentile = PiDelightCopy.rarityLabel(for: best?.storedPosition, among: allPositions)
+            return RankedSavedDate(
+                savedDate: saved,
+                rank: nil,
+                bestStoredPosition: best?.storedPosition,
+                bestFormat: best?.format,
+                percentileLabel: best == nil ? nil : percentile
+            )
+        }
+
+        let sorted: [RankedSavedDate] = switch sort {
+        case .bestPosition:
+            ranked.sorted { lhs, rhs in
+                switch (lhs.bestStoredPosition, rhs.bestStoredPosition) {
+                case let (l?, r?): return l < r
+                case (_?, nil): return true
+                case (nil, _?): return false
+                case (nil, nil):
+                    return generator.isoDateString(for: lhs.savedDate.date) < generator.isoDateString(for: rhs.savedDate.date)
+                }
+            }
+        case .label:
+            ranked.sorted { $0.savedDate.label.localizedCaseInsensitiveCompare($1.savedDate.label) == .orderedAscending }
+        case .calendarDate:
+            ranked.sorted { generator.isoDateString(for: $0.savedDate.date) < generator.isoDateString(for: $1.savedDate.date) }
+        }
+
+        return sorted.enumerated().map { index, item in
+            RankedSavedDate(
+                savedDate: item.savedDate,
+                rank: item.bestStoredPosition == nil ? nil : index + 1,
+                bestStoredPosition: item.bestStoredPosition,
+                bestFormat: item.bestFormat,
+                percentileLabel: item.percentileLabel
+            )
+        }
+    }
+
+    func shareableCard(style: ShareCardStyle, palette: ThemePalette) -> ShareableCard {
+        ShareableCard(
+            style: style,
+            date: selectedDate,
+            bestMatch: bestMatch,
+            query: exactQuery,
+            format: activeFormat,
+            displayedPosition: bestMatch.map { displayedPosition(for: $0.storedPosition) },
+            excerptRadius: excerptRadius,
+            palette: palette
+        )
+    }
+
+    func compareCurrentDate(to otherDate: Date) async -> DateBattleResult {
+        let leftDate = calendar.startOfDay(for: selectedDate)
+        let rightDate = calendar.startOfDay(for: otherDate)
+
+        async let leftSummary = repositorySummary(for: leftDate)
+        async let rightSummary = repositorySummary(for: rightDate)
+
+        return await compareDates(
+            leftDate: leftDate,
+            leftSummary: leftSummary,
+            rightDate: rightDate,
+            rightSummary: rightSummary
+        )
+    }
+
+    func compareSelectedDate(withSavedDate savedDate: SavedDate) async -> DateBattleResult {
+        await compareCurrentDate(to: savedDate.date)
+    }
+
+    func repositorySummary(for date: Date) async -> DateLookupSummary {
+        await repository.summary(for: date, formats: searchPreference.formats)
+    }
+
+    func compareDates(
+        leftDate: Date,
+        leftSummary: DateLookupSummary,
+        rightDate: Date,
+        rightSummary: DateLookupSummary
+    ) -> DateBattleResult {
+        let positions = repository.piStats?.bestDatePositions ?? []
+
+        let leftDisplayed = leftSummary.bestMatch.map { displayedPosition(for: $0.storedPosition) }
+        let rightDisplayed = rightSummary.bestMatch.map { displayedPosition(for: $0.storedPosition) }
+
+        let left = DateBattleContender(
+            date: leftDate,
+            summary: leftSummary,
+            displayedPosition: leftDisplayed,
+            percentileLabel: PiDelightCopy.rarityLabel(for: leftSummary.bestMatch?.storedPosition, among: positions)
+        )
+
+        let right = DateBattleContender(
+            date: rightDate,
+            summary: rightSummary,
+            displayedPosition: rightDisplayed,
+            percentileLabel: PiDelightCopy.rarityLabel(for: rightSummary.bestMatch?.storedPosition, among: positions)
+        )
+
+        let winner: DateBattleWinner
+        let margin: Int?
+        switch (leftDisplayed, rightDisplayed) {
+        case let (lhs?, rhs?):
+            if lhs == rhs {
+                winner = .tie
+                margin = 0
+            } else if lhs < rhs {
+                winner = .left
+                margin = rhs - lhs
+            } else {
+                winner = .right
+                margin = lhs - rhs
+            }
+        case (_?, nil):
+            winner = .left
+            margin = nil
+        case (nil, _?):
+            winner = .right
+            margin = nil
+        case (nil, nil):
+            winner = .tie
+            margin = nil
+        }
+
+        return DateBattleResult(
+            left: left,
+            right: right,
+            winner: winner,
+            winningMargin: margin,
+            verdict: PiDelightCopy.verdict(for: left, right: right, margin: margin)
+        )
     }
 
     // MARK: - Private helpers

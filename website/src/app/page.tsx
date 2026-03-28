@@ -3,6 +3,7 @@ import Hero from '@/components/Hero/Hero'
 import HowItWorks from '@/components/HowItWorks/HowItWorks'
 import WhatIsPi from '@/components/WhatIsPi/WhatIsPi'
 import Themes from '@/components/Themes/Themes'
+import WhatsNew from '@/components/WhatsNew/WhatsNew'
 import Footer from '@/components/Footer/Footer'
 import { APP_STORE_URL, IOS_REQUIREMENT, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/site'
 
@@ -39,6 +40,8 @@ export default function Home() {
           'Find today in five billion digits of pi',
           'Search birthdays and anniversaries across five date formats',
           'See earlier and later matches in a calendar heat map',
+          'Compare two dates head-to-head with Date Battles',
+          'Explore richer nerdy stats and share themed result cards',
           `Available on iPhone, iPad, and Mac with ${IOS_REQUIREMENT}`,
         ],
       },
@@ -55,6 +58,7 @@ export default function Home() {
         />
         <Hero />
         <HowItWorks />
+        <WhatsNew />
         <WhatIsPi />
         <Themes />
       </main>
