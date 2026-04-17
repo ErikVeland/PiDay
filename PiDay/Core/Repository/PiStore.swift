@@ -33,6 +33,11 @@ final class PiStore: Sendable {
     nonisolated(unsafe) private(set) var payload: PiIndexPayload?
     nonisolated(unsafe) private(set) var stats: PiStats?
     private let generator = DateStringGenerator()
+    private let featuredNumberForStats: CalendarFeaturedNumber
+
+    init(featuredNumberForStats: CalendarFeaturedNumber = .pi) {
+        self.featuredNumberForStats = featuredNumberForStats
+    }
 
     // Synchronous load — useful for tests with a known URL.
     func load(from url: URL) throws {
@@ -68,7 +73,7 @@ final class PiStore: Sendable {
         var formatCounts: [DateFormatOption: Int] = [:]
         var formatPositions: [DateFormatOption: Int] = [:]
         var maxPos = 0
-        var piDays: [Int: Int] = [:]
+        var featuredDays: [Int: Int] = [:]
         var bestDatePositions: [Int] = []
         var bestDateMatches: [PiStats.ExtremeMatch] = []
         var monthTotals: [Int: (sum: Int, count: Int)] = [:]
@@ -103,11 +108,11 @@ final class PiStore: Sendable {
                 // Max digit reached
                 if pos > maxPos { maxPos = pos }
                 
-                // Pi Day specific
-                if isoDate.contains("-03-14") {
+                // Featured-day specific (Pi Day / Tau Day / etc.)
+                if isFeaturedDay(isoDate) {
                     let year = Int(isoDate.prefix(4)) ?? 0
-                    if piDays[year] == nil || pos < piDays[year]! {
-                        piDays[year] = pos
+                    if featuredDays[year] == nil || pos < featuredDays[year]! {
+                        featuredDays[year] = pos
                     }
                 }
 
@@ -212,7 +217,7 @@ final class PiStore: Sendable {
             formatSuccessRate: rates,
             totalDatesMatched: payload.dates.count,
             maxDigitReached: maxPos,
-            piDayStats: piDays,
+            piDayStats: featuredDays,
             bestDatePositions: bestDatePositions,
             topEarliestDates: Array(topEarliestDates),
             luckiestMonth: monthAverages.min(by: { $0.averagePosition < $1.averagePosition }),
@@ -223,6 +228,11 @@ final class PiStore: Sendable {
             longestRepeatRun: longestRepeatOddity,
             mostUniqueDigits: uniqueDigitOddity
         )
+    }
+
+    private func isFeaturedDay(_ isoDate: String) -> Bool {
+        let suffix = String(format: "-%02d-%02d", featuredNumberForStats.highlightMonth, featuredNumberForStats.highlightDay)
+        return isoDate.hasSuffix(suffix)
     }
 
     private func longestRepeatedRun(in query: String) -> Int {
