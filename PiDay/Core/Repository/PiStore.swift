@@ -73,7 +73,7 @@ final class PiStore: Sendable {
         var formatCounts: [DateFormatOption: Int] = [:]
         var formatPositions: [DateFormatOption: Int] = [:]
         var maxPos = 0
-        var featuredDayStats: [Int: Int] = [:]
+        var featuredDays: [Int: Int] = [:]
         var bestDatePositions: [Int] = []
         var bestDateMatches: [PiStats.ExtremeMatch] = []
         var monthTotals: [Int: (sum: Int, count: Int)] = [:]
@@ -108,11 +108,11 @@ final class PiStore: Sendable {
                 // Max digit reached
                 if pos > maxPos { maxPos = pos }
                 
-                // Featured-day specific (e.g. 03-14 for π, 06-28 for τ, 04-14 for Planck).
-                let year = Int(isoDate.prefix(4)) ?? 0
-                if isFeaturedDay(isoDate: isoDate) {
-                    if featuredDayStats[year] == nil || pos < featuredDayStats[year]! {
-                        featuredDayStats[year] = pos
+                // Featured-day specific (Pi Day / Tau Day / etc.)
+                if isFeaturedDay(isoDate) {
+                    let year = Int(isoDate.prefix(4)) ?? 0
+                    if featuredDays[year] == nil || pos < featuredDays[year]! {
+                        featuredDays[year] = pos
                     }
                 }
 
@@ -217,7 +217,7 @@ final class PiStore: Sendable {
             formatSuccessRate: rates,
             totalDatesMatched: payload.dates.count,
             maxDigitReached: maxPos,
-            piDayStats: featuredDayStats,
+            piDayStats: featuredDays,
             bestDatePositions: bestDatePositions,
             topEarliestDates: Array(topEarliestDates),
             luckiestMonth: monthAverages.min(by: { $0.averagePosition < $1.averagePosition }),
@@ -230,13 +230,8 @@ final class PiStore: Sendable {
         )
     }
 
-    private func isFeaturedDay(isoDate: String) -> Bool {
-        // isoDate is "YYYY-MM-DD" — we match on "-MM-DD"
-        let cal = Calendar(identifier: .gregorian)
-        guard let highlight = featuredNumberForStats.highlightDate(inYear: 2026, calendar: cal) else { return false }
-        let comps = cal.dateComponents([.month, .day], from: highlight)
-        guard let m = comps.month, let d = comps.day else { return false }
-        let suffix = String(format: "-%02d-%02d", m, d)
+    private func isFeaturedDay(_ isoDate: String) -> Bool {
+        let suffix = String(format: "-%02d-%02d", featuredNumberForStats.highlightMonth, featuredNumberForStats.highlightDay)
         return isoDate.hasSuffix(suffix)
     }
 
