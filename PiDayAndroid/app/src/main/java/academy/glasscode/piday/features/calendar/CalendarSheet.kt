@@ -4,6 +4,7 @@ import academy.glasscode.piday.core.domain.*
 import academy.glasscode.piday.design.AppPalette
 import academy.glasscode.piday.features.main.AppViewModel
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -33,6 +34,7 @@ import java.util.Locale
 fun CalendarSheet(vm: AppViewModel, palette: AppPalette, onDismiss: () -> Unit) {
     val displayedMonth by vm.displayedMonth.collectAsStateWithLifecycle()
     val daySummaries   by vm.daySummaries.collectAsStateWithLifecycle()
+    val featured       by vm.featuredNumber.collectAsStateWithLifecycle()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -77,6 +79,7 @@ fun CalendarSheet(vm: AppViewModel, palette: AppPalette, onDismiss: () -> Unit) 
                     DayCell(
                         summary  = summary,
                         isToday  = summary.date == vm.today,
+                        isFeaturedDay = featured.highlights(summary.date),
                         palette  = palette,
                         onClick  = {
                             vm.selectDate(summary.date)
@@ -94,6 +97,7 @@ fun CalendarSheet(vm: AppViewModel, palette: AppPalette, onDismiss: () -> Unit) 
 private fun DayCell(
     summary: DaySummary,
     isToday: Boolean,
+    isFeaturedDay: Boolean,
     palette: AppPalette,
     onClick: () -> Unit
 ) {
@@ -112,6 +116,11 @@ private fun DayCell(
             .padding(2.dp)
             .clip(CircleShape)
             .background(if (summary.isInBundledRange && summary.isInDisplayedMonth) heatColor else Color.Transparent)
+            .border(
+                width = 2.dp,
+                color = if (isFeaturedDay && summary.isInDisplayedMonth) palette.accent.copy(alpha = 0.45f) else Color.Transparent,
+                shape = CircleShape
+            )
             .clickable(enabled = summary.isInDisplayedMonth) { onClick() }
     ) {
         if (summary.isSelected) {

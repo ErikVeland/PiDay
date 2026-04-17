@@ -19,6 +19,7 @@ class PreferencesStore(private val context: Context) {
         val KEY_THEME       = stringPreferencesKey("theme")
         val KEY_FORMAT_PREF = stringPreferencesKey("format_pref")
         val KEY_INDEXING    = stringPreferencesKey("indexing")
+        val KEY_FEATURED    = stringPreferencesKey("featured_number")
     }
 
     val themeFlow: Flow<AppThemeOption> = context.prefDataStore.data.map { prefs ->
@@ -36,6 +37,10 @@ class PreferencesStore(private val context: Context) {
             ?: IndexingConvention.ONE_BASED
     }
 
+    val featuredNumberFlow: Flow<CalendarFeaturedNumber> = context.prefDataStore.data.map { prefs ->
+        CalendarFeaturedNumber.fromRaw(prefs[KEY_FEATURED]) ?: CalendarFeaturedNumber.PI
+    }
+
     suspend fun setTheme(theme: AppThemeOption) {
         context.prefDataStore.edit { it[KEY_THEME] = theme.name }
     }
@@ -46,5 +51,9 @@ class PreferencesStore(private val context: Context) {
 
     suspend fun setIndexingConvention(convention: IndexingConvention) {
         context.prefDataStore.edit { it[KEY_INDEXING] = convention.name }
+    }
+
+    suspend fun setFeaturedNumber(featured: CalendarFeaturedNumber) {
+        context.prefDataStore.edit { it[KEY_FEATURED] = featured.rawValue }
     }
 }

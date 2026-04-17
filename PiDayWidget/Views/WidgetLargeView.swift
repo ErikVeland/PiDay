@@ -38,13 +38,13 @@ struct WidgetLargeView: View {
                     .foregroundStyle(entry.palette.ink)
             }
             Spacer()
-            PiWordmark(palette: entry.palette)
+            PiWordmark(symbol: entry.featuredNumber.logoSymbol, palette: entry.palette)
         }
     }
 
     private var todayMainSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("TODAY IN PI")
+            Text("TODAY IN \(entry.featuredNumber.heatMapSymbol)")
                 .font(.system(size: 10, weight: .black))
                 .foregroundStyle(entry.palette.mutedInk)
 
@@ -62,7 +62,7 @@ struct WidgetLargeView: View {
                     .lineLimit(1)
                 }
             case let .notFound(heroQuery, _):
-                Text("\(heroQuery) not found in first 5B digits")
+                Text("\(heroQuery) not found in bundled digits")
                     .font(.caption)
                     .foregroundStyle(entry.palette.mutedInk)
             case .outOfRange:

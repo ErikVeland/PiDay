@@ -28,9 +28,9 @@ struct MainView: View {
     @State private var detailsBounce = false
     @State private var statsBounce = false
     @State private var confettiTrigger = 0
-    @State private var showFreeSearch = false
     @State private var showStats = false
     @State private var showShareOptions = false
+    @State private var showFeaturedNumberPicker = false
 
     var body: some View {
         let palette = preferences.resolvedPalette
@@ -51,7 +51,6 @@ struct MainView: View {
             VStack(spacing: 0) {
                 Spacer()
                 ResultStripView(
-                    onFreeSearch: { showFreeSearch = true },
                     onShare: { showShareOptions = true }
                 )
                     .padding(.bottom, 6)
@@ -87,13 +86,6 @@ struct MainView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showFreeSearch) {
-            FreeSearchView()
-                .environment(viewModel)
-                .environment(preferences)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-        }
         .sheet(isPresented: $showStats) {
             StatsView(isPresented: $showStats)
                 .environment(viewModel)
@@ -108,6 +100,30 @@ struct MainView: View {
                 nerdCard: viewModel.shareableCard(style: .nerd, palette: preferences.resolvedPalette)
             )
             .environment(preferences)
+        }
+        .confirmationDialog(
+            "Choose Featured Number",
+            isPresented: $showFeaturedNumberPicker,
+            titleVisibility: .visible
+        ) {
+            ForEach(CalendarFeaturedNumber.allCases) { featured in
+                Button("\(featured.logoSymbol)  \(featured.title)") {
+                    viewModel.setCalendarFeaturedNumber(featured)
+                    hapticTrigger.toggle()
+                }
+                .disabled(!viewModel.isIndexResourceBundled(for: featured))
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .alert(item: Binding(
+            get: { viewModel.nerdyPopup },
+            set: { viewModel.nerdyPopup = $0 }
+        )) { popup in
+            Alert(
+                title: Text(popup.title),
+                message: Text(popup.message),
+                dismissButton: .default(Text("OK"))
+            )
         }
         // Restart the reveal animation whenever the target query changes.
         // WHY reduceMotion check: users who opt out of motion get an instant
@@ -144,7 +160,7 @@ struct MainView: View {
         .onChange(of: viewModel.isLoading) { _, newValue in
             UIAccessibility.post(
                 notification: .announcement,
-                argument: newValue ? "Loading pi data" : "Pi data ready"
+                argument: newValue ? "Loading digit index" : "Digit index ready"
             )
         }
         // Fire confetti only when the user explicitly looked up a birthday via the
@@ -152,6 +168,9 @@ struct MainView: View {
         // birthdayConfettiVersion from inside refreshSelection so the signal is
         // guaranteed to arrive after the result is ready.
         .onChange(of: viewModel.birthdayConfettiVersion) { _, _ in
+            confettiTrigger += 1
+        }
+        .onChange(of: viewModel.specialConfettiVersion) { _, _ in
             confettiTrigger += 1
         }
     }
@@ -250,7 +269,7 @@ struct MainView: View {
         .foregroundStyle(preferences.resolvedPalette.ink)
         .accessibilityLabel("Share")
         // WHY disabled during loading: sharing while a lookup is in flight would
-        // produce a "not found" share card even if the date actually exists in pi.
+        // produce a "not found" share card even if the date actually exists.
         .disabled(viewModel.isLoading || viewModel.errorMessage != nil)
     }
 
@@ -258,9 +277,11 @@ struct MainView: View {
 
     private var topWordmark: some View {
         let palette = preferences.resolvedPalette
+        let featuredNumber = viewModel.calendarFeaturedNumber
 
-        return HStack(alignment: .firstTextBaseline, spacing: -4) {
-                Text("∏")
+        return HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: -4) {
+                Text(featuredNumber.logoSymbol)
                     .font(.system(size: 24, weight: .black, design: .serif))
                     .italic()
                 Text("day")
@@ -280,7 +301,7 @@ struct MainView: View {
             .shadow(color: (palette.accent.opacity(0.2) as Color), radius: 18, y: 2)
             .overlay(
                 HStack(alignment: .firstTextBaseline, spacing: -4) {
-                    Text("∏")
+                    Text(featuredNumber.logoSymbol)
                         .font(.system(size: 24, weight: .black, design: .serif))
                         .italic()
                     Text("day")
@@ -290,6 +311,18 @@ struct MainView: View {
                 .foregroundStyle((Color.white.opacity(0.20) as Color))
                 .blur(radius: 0.4)
             )
+
+            Text(featuredNumber.shortLabel)
+                .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                .foregroundStyle(palette.ink)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(palette.paneSurfaceFill(for: colorScheme))
+                )
+                .offset(y: -1)
+        }
             .fixedSize()
             .opacity(0.94)
             .contentShape(Rectangle())
@@ -298,7 +331,11 @@ struct MainView: View {
                 statsBounce.toggle()
                 hapticTrigger.toggle()
             }
-            .accessibilityLabel("Show Pi Stats")
+            .onLongPressGesture(minimumDuration: 0.35) {
+                showFeaturedNumberPicker = true
+                hapticTrigger.toggle()
+            }
+            .accessibilityLabel("Show stats for \(featuredNumber.title)")
             .accessibilityAddTraits(.isButton)
     }
 
@@ -309,13 +346,13 @@ struct MainView: View {
             palette.background
                 .ignoresSafeArea()
                 .opacity(0.85)
-            // WHY label: on older devices, decoding the 12.6 MB JSON can take
+            // WHY label: on older devices, decoding the bundled indexes can take
             // 1–3 seconds. A spinner with no text gives users no cue about what
-            // is happening. "Loading π…" names the work concisely.
+            // is happening.
             VStack(spacing: 12) {
                 ProgressView()
                     .tint(palette.mutedInk)
-                Text("Loading π…")
+                Text("Loading indexes…")
                     .font(.caption)
                     .foregroundStyle(palette.mutedInk)
             }

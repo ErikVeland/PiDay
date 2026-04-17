@@ -29,7 +29,8 @@ struct PiDayApp: App {
                             hasSeenOnboarding = true
                             showOnboarding = false
                         },
-                        accentColor: preferences.resolvedPalette.accent
+                        accentColor: preferences.resolvedPalette.accent,
+                        featuredNumber: viewModel.calendarFeaturedNumber
                     )
                 }
                 .onOpenURL { url in

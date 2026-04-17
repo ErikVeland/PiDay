@@ -56,6 +56,7 @@ struct PreferencesView: View {
     // the parent NavigationStack picks them up correctly.
     var body: some View {
         List {
+            featuredNumberSection
             appearanceSection
             colourCodingSection
             typographySection
@@ -82,6 +83,30 @@ struct PreferencesView: View {
     }
 
     // ── Appearance ────────────────────────────────────────────────────────────
+
+    private var featuredNumberSection: some View {
+        Section {
+            Picker(
+                "Featured Number",
+                selection: Binding(
+                    get: { viewModel.calendarFeaturedNumber },
+                    set: { viewModel.setCalendarFeaturedNumber($0) }
+                )
+            ) {
+                ForEach(CalendarFeaturedNumber.allCases) { featured in
+                    Text("\(featured.logoSymbol)  \(featured.title)")
+                        .tag(featured)
+                }
+            }
+        } header: {
+            Label("Featured Number", systemImage: "number")
+                .prefSectionHeader()
+        } footer: {
+            Text("This changes the digit index used for the calendar, lookups, stats, and sharing.")
+                .font(.footnote)
+                .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+        }
+    }
 
     private var appearanceSection: some View {
         Section {

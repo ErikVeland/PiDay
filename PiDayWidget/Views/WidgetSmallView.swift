@@ -10,7 +10,7 @@ struct WidgetSmallView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            PiWordmark(palette: entry.palette)
+            PiWordmark(symbol: entry.featuredNumber.logoSymbol, palette: entry.palette)
 
             Spacer()
 
@@ -52,7 +52,7 @@ struct WidgetSmallView: View {
                 Text(heroQuery)
                     .font(.system(.title3, design: .monospaced, weight: .bold))
                     .foregroundStyle(entry.palette.mutedInk.opacity(0.4))
-                Text("not in first 5B digits")
+                Text("not found in bundled digits")
                     .font(.caption)
                     .foregroundStyle(entry.palette.mutedInk)
             }

@@ -9,7 +9,7 @@ data class CalendarDay(
 )
 
 // DaySummary is the ViewModel-level type for one calendar cell.
-// It combines date identity with pi-hit metadata so Composables are pure display logic.
+// It combines date identity with digit-hit metadata so Composables are pure display logic.
 data class DaySummary(
     val date: LocalDate,
     val dayNumber: Int,

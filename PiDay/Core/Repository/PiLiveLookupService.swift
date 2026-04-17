@@ -2,7 +2,8 @@ import Foundation
 
 // WHY: Live lookup is isolated here so it can evolve independently.
 // If the external API changes its response format, only this file changes.
-// It's not a repository itself — it's a data source used by DefaultPiRepository.
+// It's not a repository itself — it's an optional data source (currently not used in the
+// bundled-only app flow).
 
 enum PiLiveLookupError: LocalizedError {
     case invalidResponse
@@ -11,9 +12,9 @@ enum PiLiveLookupError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidResponse:
-            return "Live pi lookup returned an unexpected response."
+            return "Live lookup returned an unexpected response."
         case .queryMismatch:
-            return "Live pi lookup returned digits that did not match the requested date."
+            return "Live lookup returned digits that did not match the requested date."
         }
     }
 }
@@ -92,7 +93,7 @@ final class PiLiveLookupService: @unchecked Sendable {
         )
     }
 
-    // Searches for an arbitrary digit sequence in pi (not date-specific).
+    // Searches for an arbitrary digit sequence in the live index (not date-specific).
     // Used by FreeSearchViewModel. Returns nil if the sequence is not found.
     func searchDigits(_ digits: String) async throws -> (storedPosition: Int, excerpt: String)? {
         // We reuse the existing lookup helper. The format parameter doesn't affect

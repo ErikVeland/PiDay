@@ -11,6 +11,7 @@ struct OnboardingView: View {
     // accent colour from PreferencesStore so the onboarding matches the user's
     // active theme. The default falls back to Frost blue if called without a palette.
     var accentColor: Color = Color(red: 0.11, green: 0.44, blue: 0.85)
+    var featuredNumber: CalendarFeaturedNumber = .pi
 
     @State private var currentPage = 0
 
@@ -66,10 +67,10 @@ struct OnboardingView: View {
 
     private var card1: some View {
         onboardingCard(
-            symbol: "π",
+            symbol: featuredNumber.logoSymbol,
             symbolIsText: true,
-            title: "Your date is hiding in π",
-            body: "PiDay searches billions of digits to find exactly where your birthday appears."
+            title: "Your date is hiding in \(featuredNumber.heatMapSymbol)",
+            body: "PiDay searches bundled digit indexes to find exactly where your birthday appears."
         )
     }
 
@@ -78,7 +79,7 @@ struct OnboardingView: View {
             symbol: "calendar.badge.checkmark",
             symbolIsText: false,
             title: "Heat-map calendar",
-            body: "Each day glows hotter based on how early it appears in π. March 14 is Pi Day."
+            body: "Each day glows hotter based on how early it appears. Use the number switcher to move between π, τ, e, φ, and more."
         )
     }
 

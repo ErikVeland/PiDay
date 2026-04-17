@@ -11,7 +11,6 @@ struct ResultStripView: View {
     @Environment(AppViewModel.self) private var viewModel
     @Environment(PreferencesStore.self) private var preferences
     @Environment(\.colorScheme) private var colorScheme
-    let onFreeSearch: () -> Void
     let onShare: () -> Void
 
     var body: some View {
@@ -78,7 +77,7 @@ struct ResultStripView: View {
             // (the ProgressView branch above catches loading). Both in-range "not found"
             // and out-of-range "no live match" mean the same thing to the user: no result.
             // The Detail sheet provides the nuanced explanation if they want it.
-            Text("Not found in π")
+            Text("Not found in \(viewModel.calendarFeaturedNumber.heatMapSymbol)")
                 .foregroundStyle(palette.mutedInk)
                 .lineLimit(1)
         }
@@ -111,10 +110,6 @@ struct ResultStripView: View {
             } label: {
                 Label("Copy Position", systemImage: "doc.on.doc")
             }
-        }
-
-        Button { onFreeSearch() } label: {
-            Label("Search Pi Digits", systemImage: "magnifyingglass")
         }
     }
 
@@ -164,8 +159,9 @@ struct ResultStripView: View {
 private struct HeatIndicatorView: View {
     let heatLevel: PiHeatLevel
     let color: Color
+    @Environment(AppViewModel.self) private var viewModel
 
-    // Heights grow left → right so more bars = stronger signal = earlier in pi.
+    // Heights grow left → right so more bars = stronger signal = earlier in the digit stream.
     private static let barHeights: [CGFloat] = [5, 7, 9, 11]
 
     private var litCount: Int {
@@ -191,12 +187,13 @@ private struct HeatIndicatorView: View {
     }
 
     private var accessibilityLabel: String {
+        let symbol = viewModel.calendarFeaturedNumber.heatMapSymbol
         switch heatLevel {
         case .none:  return "not found"
-        case .faint: return "found late in pi"
-        case .cool:  return "found in pi"
-        case .warm:  return "found early in pi"
-        case .hot:   return "found very early in pi"
+        case .faint: return "found late in \(symbol)"
+        case .cool:  return "found in \(symbol)"
+        case .warm:  return "found early in \(symbol)"
+        case .hot:   return "found very early in \(symbol)"
         }
     }
 }

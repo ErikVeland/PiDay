@@ -1,8 +1,8 @@
 # PiDay
 
-Find your birthday in the digits of Pi.
+Find your date in the digits of famous constants.
 
-PiDay searches up to 5 billion decimal places of π for any date you choose, shows you where it first appears, and displays a calendar heat map of how early every day of the year shows up.
+PiDay ships with bundled ten-year digit indexes (2026–2035) for multiple numbers (π, τ, e, φ, Planck). Pick a date and see how early it appears — plus a calendar heat map for every day.
 
 Available on the [App Store](https://apps.apple.com/app/piday/id6740270587) · [piday.glasscode.academy](https://piday.glasscode.academy)
 
@@ -53,7 +53,7 @@ Key layers:
 
 | Layer | What it does |
 |---|---|
-| `Core/Repository` | Routes lookups to the bundled JSON index (2026–2035) or the live Pi Search API |
+| `Core/Repository` | Bundled-only lookups across featured numbers via JSON indexes (2026–2035) |
 | `Core/Domain` | Pure value types — `DateFormatOption`, `PiMatch`, `CalendarModels`, etc. |
 | `Features/Main/AppViewModel` | All search state, navigation, and caching |
 | `Services/PreferencesStore` | Appearance settings (theme, font, accent colour) |
@@ -87,23 +87,39 @@ Or open `PiDayAndroid/` in Android Studio and press Run.
 
 The core port is complete. What's implemented:
 
-- [x] Bundled index lookup (`pi_2026_2035_index.json`)
-- [x] Live API fallback for out-of-range dates (Ktor)
+- [x] Bundled index lookup (2026–2035) for featured numbers: π / τ / e / φ / Planck
 - [x] All date formats + Search Format Preference
 - [x] Calendar heat map sheet
-- [x] Pi canvas with highlighted date sequence
+- [x] Digit canvas with highlighted date sequence
 - [x] Detail sheet
+- [x] Nerdy Stats 2.0
+- [x] Date Battles
 - [x] Preferences screen (themes, font style, digit size)
-- [x] Saved dates
-- [x] Free search (arbitrary digit sequence)
-- [x] Share card
+- [x] Saved Dates leaderboard (sorting, ranking, label editing)
+- [x] Share styles (Classic, Nerd, Battle text share flows)
 
 What still needs Android-specific polish (good first targets for a new contributor):
 
-- [ ] Share card export — `ShareSheet` integration for saving/sharing the PNG
+- [ ] Visual card export — render shareable images instead of text-only share flows
 - [ ] Home screen widget (AppWidget / Glance)
-- [ ] Play Store release build + signing config
-- [ ] Notification (annual Pi Day reminder)
+- [x] Play Store release build + signing config scaffold
+- [ ] Notification (annual featured-day reminders)
+
+### Android release build
+
+The Android app version is tracked in `PiDayAndroid/gradle.properties`:
+
+- `PIDAY_ANDROID_VERSION_CODE`
+- `PIDAY_ANDROID_VERSION_NAME`
+
+To produce a signed release build, copy `PiDayAndroid/keystore.properties.example` to `PiDayAndroid/keystore.properties`, fill in your keystore values, and then run:
+
+```bash
+cd PiDayAndroid
+./gradlew bundleRelease
+```
+
+Use `bundleRelease` for the Play Store AAB. `assembleRelease` is still useful for a quick APK smoke test. If `keystore.properties` is absent, Gradle still builds the unsigned release variant so CI and local validation can run without secrets.
 
 ### Contributing
 
@@ -123,6 +139,48 @@ The bundled resource `PiDayAndroid/app/src/main/res/raw/pi_2026_2035_index.json`
 To regenerate:
 1. `Scripts/generate_exact_index.py` — queries the Pi Search API for all date sequences
 2. `Scripts/generate_pi_index.swift` — processes raw matches into the structured JSON
+
+## Featured-number digit indexes (Tau / e / Phi / Planck)
+
+The app ships with bundled indexes for each featured number. Each mode looks for the same date strings, but in a different digit stream (π, τ, e, φ, Planck). If a given index is not present in the app bundle, the UI shows an "index unavailable" state for that mode (no fake data).
+
+Generated resource names (iOS `PiDay/Resources/`, Android `app/src/main/res/raw/`):
+
+- `tau_2026_2035_index.json`
+- `e_2026_2035_index.json`
+- `phi_2026_2035_index.json`
+- `planck_2026_2035_index.json`
+
+To generate (examples):
+
+```bash
+# Euler's number (e) via pisearch.org
+python3 Scripts/generate_featured_number_index.py \
+  --featured e \
+  --start-year 2026 --end-year 2035 \
+  --output PiDay/Resources/e_2026_2035_index.json
+
+# Phi via pisearch.org
+python3 Scripts/generate_featured_number_index.py \
+  --featured phi \
+  --start-year 2026 --end-year 2035 \
+  --output PiDay/Resources/phi_2026_2035_index.json
+
+# Tau requires a local digits file (digits after the decimal point).
+pip install pyahocorasick --break-system-packages
+python3 Scripts/generate_featured_number_index.py \
+  --featured tau \
+  --digits-file /path/to/tau_digits.txt \
+  --start-year 2026 --end-year 2035 \
+  --output PiDay/Resources/tau_2026_2035_index.json
+
+# Planck uses a generated digit stream (exact rational h in eV·s mantissa)
+python3 Scripts/generate_featured_number_index.py \
+  --featured planck \
+  --planck-digits 500000000 \
+  --start-year 2026 --end-year 2035 \
+  --output PiDay/Resources/planck_2026_2035_index.json
+```
 
 ---
 

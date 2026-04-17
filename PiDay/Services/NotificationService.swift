@@ -25,8 +25,9 @@ enum NotificationService {
         }
     }
 
-    // Request permission from an explicit user action, then schedule the annual reminder.
-    static func requestAndSchedulePiDay() async -> AuthorizationState {
+    // Request permission from an explicit user action, then schedule annual reminders
+    // for each featured number day.
+    static func requestAndScheduleFeaturedDays() async -> AuthorizationState {
         let center = UNUserNotificationCenter.current()
         let currentState = await authorizationState()
 
@@ -35,45 +36,48 @@ enum NotificationService {
             return await authorizationState()
         }
 
-        await schedulePiDayIfNeeded(center: center)
+        await scheduleFeaturedDaysIfNeeded(center: center)
         return .authorized
     }
 
-    static func schedulePiDayIfAuthorized() async {
+    static func scheduleFeaturedDaysIfAuthorized() async {
         let center = UNUserNotificationCenter.current()
         guard await authorizationState() == .authorized else { return }
-        await schedulePiDayIfNeeded(center: center)
+        await scheduleFeaturedDaysIfNeeded(center: center)
     }
 
     // MARK: - Private
 
-    private static let notificationID = "academy.glasscode.piday.piday-notification"
-
-    private static func schedulePiDayIfNeeded(center: UNUserNotificationCenter) async {
-        // Don't reschedule if one is already pending.
+    private static func scheduleFeaturedDaysIfNeeded(center: UNUserNotificationCenter) async {
+        // Don't reschedule if a given reminder is already pending.
         let pending = await center.pendingNotificationRequests()
-        if pending.contains(where: { $0.identifier == notificationID }) { return }
 
-        let content = UNMutableNotificationContent()
-        content.title = "Happy Pi Day! 🥧"
-        content.body = "It's March 14 — Pi Day. Open PiDay to find your place in π."
-        content.sound = .default
+        let cal = Calendar(identifier: .gregorian)
+        let year = cal.component(.year, from: Date())
 
-        // March 14 at 9:14 AM — π day at π time.
-        var components = DateComponents()
-        components.month = 3
-        components.day = 14
-        components.hour = 9
-        components.minute = 14
+        for featured in CalendarFeaturedNumber.allCases {
+            let id = "academy.glasscode.piday.featuredDay.\(featured.rawValue)"
+            if pending.contains(where: { $0.identifier == id }) { continue }
 
-        // repeats: true means this fires every year automatically.
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
-        let request = UNNotificationRequest(
-            identifier: notificationID,
-            content: content,
-            trigger: trigger
-        )
+            guard let date = featured.highlightDate(inYear: year, calendar: cal) else { continue }
+            let comps = cal.dateComponents([.month, .day], from: date)
+            guard let month = comps.month, let day = comps.day else { continue }
 
-        try? await center.add(request)
+            let content = UNMutableNotificationContent()
+            content.title = "Happy \(featured.title) Day"
+            content.body = "It's \(featured.observedDayLabel). Open PiDay to find your place in \(featured.heatMapSymbol)."
+            content.sound = .default
+
+            // Keep a consistent time across numbers (equal treatment): 9:14 AM local time.
+            var triggerComponents = DateComponents()
+            triggerComponents.month = month
+            triggerComponents.day = day
+            triggerComponents.hour = 9
+            triggerComponents.minute = 14
+
+            let trigger = UNCalendarNotificationTrigger(dateMatching: triggerComponents, repeats: true)
+            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+            try? await center.add(request)
+        }
     }
 }

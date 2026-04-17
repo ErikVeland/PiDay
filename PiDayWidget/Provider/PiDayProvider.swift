@@ -17,6 +17,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
     private let appearanceModeKey = "academy.glasscode.piday.pref.appearanceMode"
     private let searchPreferenceKey = "academy.glasscode.piday.searchPreference"
     private let indexingConventionKey = "academy.glasscode.piday.indexingConvention"
+    private let calendarFeaturedNumberKey = "academy.glasscode.piday.calendarFeaturedNumber"
     private let accentRKey = "academy.glasscode.piday.pref.accentR"
     private let accentGKey = "academy.glasscode.piday.pref.accentG"
     private let accentBKey = "academy.glasscode.piday.pref.accentB"
@@ -42,7 +43,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
 
     // getTimeline() is the main workhorse — called periodically by WidgetKit.
     // We return one entry for today and tell WidgetKit to reload at midnight.
-    // WHY one entry: the pi result for a given date never changes, so there's
+    // WHY one entry: the bundled result for a given date never changes, so there's
     // nothing to animate within a day. At midnight a new day starts, so we need
     // fresh data then.
     func timeline(for configuration: WidgetThemeIntent, in context: Context) async -> Timeline<PiDayEntry> {
@@ -68,10 +69,12 @@ struct PiDayProvider: AppIntentTimelineProvider {
         let palette = resolvedTheme.palette(customAccent: customAccent, colorScheme: resolvedAppearance)
         let preference = resolveSearchPreference()
         let indexingConvention = resolveIndexingConvention()
+        let featuredNumber = resolveFeaturedNumber()
 
-        guard let store = Self.cachedStore else {
+        guard let store = Self.cachedStores[featuredNumber] else {
             return PiDayEntry(
                 date: today,
+                featuredNumber: featuredNumber,
                 result: .outOfRange,
                 upcomingResults: nil,
                 stats: nil,
@@ -83,6 +86,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
         guard let metadata = store.payload?.metadata else {
             return PiDayEntry(
                 date: today,
+                featuredNumber: featuredNumber,
                 result: .outOfRange,
                 upcomingResults: nil,
                 stats: nil,
@@ -96,6 +100,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
         guard year >= metadata.startYear && year <= metadata.endYear else {
             return PiDayEntry(
                 date: today,
+                featuredNumber: featuredNumber,
                 result: .outOfRange,
                 upcomingResults: nil,
                 stats: nil,
@@ -135,6 +140,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
             )
             return PiDayEntry(
                 date: today,
+                featuredNumber: featuredNumber,
                 result: .found(
                     query: best.query,
                     format: best.format,
@@ -151,6 +157,7 @@ struct PiDayProvider: AppIntentTimelineProvider {
             let heroQuery = generator.strings(for: today, formats: [preference.heroFormat]).first?.1 ?? ""
             return PiDayEntry(
                 date: today,
+                featuredNumber: featuredNumber,
                 result: .notFound(heroQuery: heroQuery, format: preference.heroFormat),
                 upcomingResults: upcoming,
                 stats: stats,
@@ -216,6 +223,17 @@ struct PiDayProvider: AppIntentTimelineProvider {
         return convention
     }
 
+    private func resolveFeaturedNumber() -> CalendarFeaturedNumber {
+        let defaults = UserDefaults(suiteName: appGroupID) ?? .standard
+        guard
+            let raw = defaults.string(forKey: calendarFeaturedNumberKey),
+            let value = CalendarFeaturedNumber(rawValue: raw)
+        else {
+            return .pi
+        }
+        return value
+    }
+
     private var customAccent: Color {
         let defaults = UserDefaults(suiteName: appGroupID) ?? .standard
         let r = defaults.double(forKey: accentRKey)
@@ -270,18 +288,27 @@ struct PiDayProvider: AppIntentTimelineProvider {
 }
 
 private extension PiDayProvider {
-    static let cachedStore: PiStore? = {
-        guard let url = Bundle.main.url(forResource: "pi_2026_2035_index", withExtension: "json") else {
-            return nil
+    static let cachedStores: [CalendarFeaturedNumber: PiStore] = {
+        func loadStore(featured: CalendarFeaturedNumber) -> PiStore? {
+            guard let url = Bundle.main.url(forResource: featured.indexResourceName, withExtension: "json") else {
+                return nil
+            }
+            let store = PiStore(featuredNumberForStats: featured)
+            do {
+                try store.load(from: url)
+                return store
+            } catch {
+                return nil
+            }
         }
 
-        let store = PiStore()
-        do {
-            try store.load(from: url)
-            return store
-        } catch {
-            return nil
+        var result: [CalendarFeaturedNumber: PiStore] = [:]
+        for featured in CalendarFeaturedNumber.allCases {
+            if let store = loadStore(featured: featured) {
+                result[featured] = store
+            }
         }
+        return result
     }()
 }
 

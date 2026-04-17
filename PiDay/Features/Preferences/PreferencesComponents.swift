@@ -32,13 +32,14 @@ private struct PrefSectionHeaderModifier: ViewModifier {
 
 // A compact tile that communicates a theme's identity at a glance:
 //   • Background fill           — the theme surface colour
-//   • π wordmark in accent      — shows the primary accent
+//   • Active-number wordmark in accent — shows the primary accent (and current number)
 //   • DD·MM·YY with three tints — shows the digit colour coding
 //   • Checkmark badge           — confirms the active selection
 //
 // WHY 72 × 90 pt: tall enough to show three rows of info, narrow enough
 // that six tiles fit across a 390 pt screen without horizontal scrolling.
 struct ThemeSwatchButton: View {
+    @Environment(AppViewModel.self) private var viewModel
     let theme: AppTheme
     let isSelected: Bool
     let customAccent: Color
@@ -85,8 +86,8 @@ struct ThemeSwatchButton: View {
 
             // Content
             VStack(spacing: 5) {
-                // π in accent — the brand colour identity
-                Text("π")
+                // Active-number wordmark — reflects the currently selected digit universe.
+                Text(viewModel.calendarFeaturedNumber.logoSymbol)
                     .font(.system(size: 20, weight: .black, design: .serif))
                     .italic()
                     .foregroundStyle(p.accent)

@@ -115,11 +115,17 @@ enum PiDelightCopy {
         return "Top \(percentile)%"
     }
 
-    static func verdict(for left: DateBattleContender, right: DateBattleContender, margin: Int?) -> String {
+    static func verdict(
+        for featuredNumber: CalendarFeaturedNumber,
+        left: DateBattleContender,
+        right: DateBattleContender,
+        margin: Int?
+    ) -> String {
+        let symbol = featuredNumber.heatMapSymbol
         switch (left.displayedPosition, right.displayedPosition) {
         case let (lhs?, rhs?):
             if lhs == rhs {
-                return "It’s a dead heat. Pi refuses to pick a favorite."
+                return "It’s a dead heat. \(symbol) refuses to pick a favorite."
             }
             let winnerLabel = lhs < rhs ? "Left date" : "Right date"
             let loserLabel = lhs < rhs ? "right date" : "left date"
@@ -129,35 +135,35 @@ enum PiDelightCopy {
             if let margin, margin < 1_000_000 {
                 return "\(winnerLabel) wins comfortably, beating the \(loserLabel) by \(margin.formatted()) digits."
             }
-            return "\(winnerLabel) absolutely steamrolls the \(loserLabel). Pi can be ruthless."
+            return "\(winnerLabel) absolutely steamrolls the \(loserLabel). \(symbol) can be ruthless."
         case (_?, nil):
             return "Left date wins by existing at all. Brutal, but fair."
         case (nil, _?):
             return "Right date wins by existing at all. Brutal, but fair."
         case (nil, nil):
-            return "Neither date lands an exact hit here. Pi remains mysterious."
+            return "Neither date lands an exact hit here. \(symbol) remains mysterious."
         }
     }
 
-    static func detailFact(for date: Date, bestMatch: BestPiMatch?) -> String? {
+    static func detailFact(for featuredNumber: CalendarFeaturedNumber, date: Date, bestMatch: BestPiMatch?) -> String? {
         let calendar = Calendar(identifier: .gregorian)
         let month = calendar.component(.month, from: date)
         let day = calendar.component(.day, from: date)
 
-        if month == 3 && day == 14 {
-            return "March 14 is Pi Day royalty. Naturally it gets special treatment around here."
+        if featuredNumber.highlights(date, calendar: calendar) {
+            return "\(featuredNumber.observedDayLabel) is \(featuredNumber.accessibilityHighlightLabel). Naturally it gets special treatment around here."
         }
         if month == 2 && day == 29 {
             return "Leap day only shows up when the calendar feels extra mischievous."
         }
         if let bestMatch, longestRepeatedRun(in: bestMatch.query) >= 3 {
-            return "That query has a satisfyingly repetitive streak. Pi loves a good pattern."
+            return "That query has a satisfyingly repetitive streak. Patterns are always fun."
         }
         if let bestMatch, bestMatch.storedPosition < 1_000 {
             return "That’s an absurdly early hit. You basically found a unicorn."
         }
         if let bestMatch, bestMatch.storedPosition > 1_000_000_000 {
-            return "Pi buried this one deep. Commitment was required."
+            return "This one is buried deep. Commitment was required."
         }
         return nil
     }
