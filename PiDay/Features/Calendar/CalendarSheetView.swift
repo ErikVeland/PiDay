@@ -61,7 +61,7 @@ struct CalendarSheetView: View {
         )
         // Year prompt — only shown when a contact's birthday has no year stored.
         .sheet(item: $partialBirthday) { partial in
-            BirthdayYearPromptView(partial: partial) { date in
+            BirthdayYearPromptView(partial: partial, featuredSymbol: viewModel.calendarFeaturedNumber.heatMapSymbol) { date in
                 viewModel.selectBirthday(date)
                 isPresented = false
             }
@@ -81,9 +81,9 @@ struct CalendarSheetView: View {
                         .font(.system(.largeTitle, design: .rounded, weight: .bold))
                         .foregroundStyle(palette.panePrimaryText(for: colorScheme))
 
-                    Text(viewModel.isDisplayedMonthInBundledRange
-                         ? "Choose a day to center its sequence in pi."
-                         : "Heat map is unavailable for this month. Pick a day to run a live lookup instead.")
+                    numberIdentityRow(palette: palette)
+
+                    Text(viewModel.calendarHeaderText)
                         .font(.subheadline)
                         .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
                 }
@@ -97,11 +97,20 @@ struct CalendarSheetView: View {
                 }
             }
 
+            numberPickerRow(palette: palette)
+
             HStack(spacing: 12) {
                 calendarBadge(title: "Selected", value: shortDate(viewModel.selectedDate), palette: palette)
                 calendarBadge(
-                    title: viewModel.isDisplayedMonthInBundledRange ? "Format" : "Lookup",
-                    value: viewModel.isDisplayedMonthInBundledRange ? viewModel.searchPreference.title : "Live only",
+                    title: viewModel.calendarModeTitle,
+                    value: viewModel.calendarModeValue,
+                    palette: palette
+                )
+                calendarBadge(
+                    title: "Format",
+                    value: viewModel.isDisplayedMonthInBundledRange
+                        ? viewModel.searchPreference.title
+                        : (viewModel.isBundledIndexAvailable ? "Bundled range only" : "Index unavailable"),
                     palette: palette
                 )
             }
@@ -147,39 +156,49 @@ struct CalendarSheetView: View {
             // WHY directional layout: "Earlier in Pi" conveys that hot = rare/early,
             // which is non-obvious. Bare colour dots with labels don't communicate
             // the ordering relationship — the arrow cues do.
-            HStack(spacing: 0) {
-                Text("Not found")
+                HStack(spacing: 0) {
+                    Text("Not found")
+                        .font(.caption2)
+                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+
+                    Spacer(minLength: 8)
+
+                    HStack(spacing: 5) {
+                        Text("Later")
+                            .font(.caption2)
+                            .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                            .minimumScaleFactor(0.75)
+                            .lineLimit(1)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                        legendDot(palette.heatNone,  palette: palette)
+                        legendDot(palette.heatFaint, palette: palette)
+                        legendDot(palette.heatCool,  palette: palette)
+                        legendDot(palette.heatWarm,  palette: palette)
+                        legendDot(palette.heatHot,   palette: palette)
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                        Text("Earlier in \(viewModel.calendarFeaturedNumber.heatMapSymbol)")
+                            .font(.caption2)
+                            .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                            .minimumScaleFactor(0.75)
+                            .lineLimit(1)
+                    }
+                }
+
+            HStack(spacing: 8) {
+                Circle()
+                    .strokeBorder((palette.accent.opacity(colorScheme == .dark ? 0.55 : 0.40) as Color), lineWidth: 2)
+                    .frame(width: 10, height: 10)
+                    .accessibilityHidden(true)
+                Text("Ring = \(viewModel.calendarFeaturedNumber.accessibilityHighlightLabel)")
                     .font(.caption2)
                     .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-
-                Spacer(minLength: 8)
-
-                HStack(spacing: 5) {
-                    Text("Later")
-                        .font(.caption2)
-                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-                        .minimumScaleFactor(0.75)
-                        .lineLimit(1)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-                    legendDot(palette.heatNone,  palette: palette)
-                    legendDot(palette.heatFaint, palette: palette)
-                    legendDot(palette.heatCool,  palette: palette)
-                    legendDot(palette.heatWarm,  palette: palette)
-                    legendDot(palette.heatHot,   palette: palette)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-                    Text("Earlier in π")
-                        .font(.caption2)
-                        .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
-                        .minimumScaleFactor(0.75)
-                        .lineLimit(1)
-                }
             }
 
-            Text("Based on earliest position in the first 5 billion digits.")
+            Text(viewModel.calendarLegendText)
                 .font(.caption2)
                 .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
         }
@@ -189,7 +208,7 @@ struct CalendarSheetView: View {
     // WHY no label param: dots are now unlabelled in the directional flow;
     // context is provided by the surrounding "Later → Earlier" text.
     // WHY accessibilityHidden: the dots are decorative — the surrounding
-    // "Later → Earlier in π" text already conveys the full semantic meaning.
+    // "Later → Earlier in (number)" text already conveys the full semantic meaning.
     // Exposing unlabelled coloured circles to VoiceOver adds focus noise.
     private func legendDot(_ color: Color, palette: ThemePalette) -> some View {
         Circle()
@@ -214,6 +233,16 @@ struct CalendarSheetView: View {
                 Circle()
                     .fill(dayBackground(for: day, heatLevel: heatLevel, summary: summary, palette: palette))
                     .frame(width: dayCellSize, height: dayCellSize)
+                    .overlay(
+                        // Celebration marker — present in every mode (all numbers treated equally).
+                        Circle()
+                            .strokeBorder(
+                                viewModel.isCalendarFeatureDay(day.date)
+                                    ? (palette.accent.opacity(colorScheme == .dark ? 0.55 : 0.40) as Color)
+                                    : .clear,
+                                lineWidth: 2
+                            )
+                    )
                     .overlay(
                         Circle()
                             .strokeBorder(summary?.isSelected == true ? PiPalette.selectionStroke : .clear, lineWidth: 1.5)
@@ -243,18 +272,21 @@ struct CalendarSheetView: View {
         let dateStr = Self.longDateFormatter.string(from: day.date)
         let todayStr = day.date == viewModel.today ? ", today" : ""
         let selected = summary?.isSelected == true ? ", selected" : ""
+        let celebration = viewModel.isCalendarFeatureDay(day.date)
+            ? ", \(viewModel.calendarFeaturedNumber.accessibilityHighlightLabel)"
+            : ""
         if summary?.isInBundledRange == false {
-            return "\(dateStr)\(todayStr)\(selected), live lookup only"
+            return "\(dateStr)\(todayStr)\(selected)\(celebration), outside bundled index"
         }
         let heat: String
         switch heatLevel {
-        case .none:   heat = ", not found in pi"
-        case .faint:  heat = ", found late in pi"
-        case .cool:   heat = ", found in pi"
-        case .warm:   heat = ", found early in pi"
-        case .hot:    heat = ", found very early in pi"
+        case .none:   heat = ", not found in \(viewModel.calendarFeaturedNumber.heatMapSymbol)"
+        case .faint:  heat = ", found late in \(viewModel.calendarFeaturedNumber.heatMapSymbol)"
+        case .cool:   heat = ", found in \(viewModel.calendarFeaturedNumber.heatMapSymbol)"
+        case .warm:   heat = ", found early in \(viewModel.calendarFeaturedNumber.heatMapSymbol)"
+        case .hot:    heat = ", found very early in \(viewModel.calendarFeaturedNumber.heatMapSymbol)"
         }
-        return "\(dateStr)\(todayStr)\(selected)\(heat)"
+        return "\(dateStr)\(todayStr)\(selected)\(celebration)\(heat)"
     }
 
     private func dayBackground(for day: CalendarDay, heatLevel: PiHeatLevel, summary: DaySummary?, palette: ThemePalette) -> AnyShapeStyle {
@@ -361,6 +393,73 @@ struct CalendarSheetView: View {
         }
         .modifier(NativeGlassButtonModifier())
         .foregroundStyle(palette.panePrimaryText(for: colorScheme))
+    }
+
+    private func numberIdentityRow(palette: ThemePalette) -> some View {
+        let featuredNumber = viewModel.calendarFeaturedNumber
+
+        return HStack(spacing: 10) {
+            Text(featuredNumber.logoSymbol)
+                .font(.system(size: 20, weight: .black, design: .serif))
+                .italic()
+                .frame(width: 32, height: 32)
+                .background(
+                    Circle()
+                        .fill(palette.paneSurfaceFill(for: colorScheme))
+                )
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(featuredNumber.title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(palette.paneSecondaryText(for: colorScheme))
+                Text(featuredNumber.decimalPreview)
+                    .font(.system(.subheadline, design: .monospaced, weight: .semibold))
+                    .foregroundStyle(palette.panePrimaryText(for: colorScheme))
+            }
+        }
+        .padding(.top, 2)
+    }
+
+    private func numberPickerRow(palette: ThemePalette) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(CalendarFeaturedNumber.allCases) { featuredNumber in
+                    Button {
+                        viewModel.setCalendarFeaturedNumber(featuredNumber)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(featuredNumber.title)
+                                .font(.subheadline.weight(.semibold))
+                            Text(featuredNumber.decimalPreview)
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(
+                                    featuredNumber == viewModel.calendarFeaturedNumber
+                                        ? Color.white.opacity(0.86)
+                                        : palette.paneSecondaryText(for: colorScheme)
+                                )
+                        }
+                        .foregroundStyle(
+                            featuredNumber == viewModel.calendarFeaturedNumber
+                                ? Color.white
+                                : palette.panePrimaryText(for: colorScheme)
+                        )
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background {
+                            Capsule(style: .continuous)
+                                .fill(
+                                    featuredNumber == viewModel.calendarFeaturedNumber
+                                        ? AnyShapeStyle(PiPalette.selectedFill)
+                                        : AnyShapeStyle(palette.paneSurfaceFill(for: colorScheme))
+                                )
+                        }
+                        .opacity(viewModel.isIndexResourceBundled(for: featuredNumber) ? 1.0 : 0.45)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!viewModel.isIndexResourceBundled(for: featuredNumber))
+                }
+            }
+        }
     }
 
     private func calendarBadge(title: String, value: String, palette: ThemePalette) -> some View {

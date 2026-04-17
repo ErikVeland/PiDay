@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+struct NerdyPopup: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let message: String
+}
+
 enum SavedDatesSortOption: String, CaseIterable, Identifiable {
     case bestPosition
     case label
@@ -54,7 +60,7 @@ final class AppViewModel {
     // Result of the most recent lookup for selectedDate.
     var lookupSummary: DateLookupSummary?
 
-    // True while the bundled index loads at startup or a live lookup is in flight.
+    // True while the bundled indexes load at startup or a lookup is in flight.
     var isLoading = true
 
     // Shown in the UI when a network or file error occurs.
@@ -68,6 +74,9 @@ final class AppViewModel {
 
     // Per-cell summaries for the displayed calendar month.
     var daySummaries: [Date: DaySummary] = [:]
+
+    // Which number/celebration the calendar is currently showing.
+    var calendarFeaturedNumber: CalendarFeaturedNumber = .pi
 
     // Saved dates — owned here so both DetailSheetView and SavedDatesView observe the same store.
     let savedDatesStore = SavedDatesStore()
@@ -86,6 +95,12 @@ final class AppViewModel {
     // don't re-query on every open.
     var notificationAuthState: NotificationService.AuthorizationState = .notDetermined
 
+    // One-off nerdy explanations (Pi Day / Tau Day / alternate Pi Day etc.)
+    var nerdyPopup: NerdyPopup?
+
+    // Separate confetti trigger for "featured day" celebrations.
+    private(set) var specialConfettiVersion = 0
+
     // MARK: - Non-observed state (doesn't need to drive UI)
 
     let today: Date
@@ -94,7 +109,7 @@ final class AppViewModel {
     // MARK: - Private
 
     private let calendar: Calendar
-    private let repository: any PiRepository
+    private let repository: any FeaturedNumberRepository
     private let generator = DateStringGenerator()  // WHY hoisted: avoid per-call allocation
 
     // WHY bounded cache: months are lightweight but accumulate without limit if the
@@ -107,6 +122,7 @@ final class AppViewModel {
     private var lookupTask: Task<Void, Never>?
     // Set by selectBirthday(_:); consumed and cleared at the start of refreshSelection.
     private var confettiPending = false
+    private var shownPopupIDs: Set<String> = []
 
     // Tracks unique ISO date strings navigated; resets after triggering rating prompt.
     private var distinctDatesViewed: Set<String> = []
@@ -117,6 +133,7 @@ final class AppViewModel {
     private static let ratingPromptKey       = "academy.glasscode.piday.hasPromptedForRating"
     private static let searchPreferenceKey   = "academy.glasscode.piday.searchPreference"
     private static let indexingConventionKey = "academy.glasscode.piday.indexingConvention"
+    private static let calendarFeaturedNumberKey = "academy.glasscode.piday.calendarFeaturedNumber"
     private static let appGroupID            = "group.academy.glasscode.piday"
 
     // Infer a sensible first-launch default from the device locale.
@@ -165,17 +182,17 @@ final class AppViewModel {
     // MARK: - Init
 
     // WHY: We accept a repository parameter so tests can inject a mock.
-    // In production, the default is DefaultPiRepository.
+    // In production, the default is DefaultFeaturedNumberRepository.
     // Explicit @MainActor keeps the initializer aligned with Swift 6 actor-isolation
     // rules in the iOS 26 toolchain.
     @MainActor
     init(
         today: Date = Date(),
         calendar: Calendar = Calendar(identifier: .gregorian),
-        repository: (any PiRepository)? = nil
+        repository: (any FeaturedNumberRepository)? = nil
     ) {
         self.calendar = calendar
-        self.repository = repository ?? DefaultPiRepository()
+        self.repository = repository ?? DefaultFeaturedNumberRepository()
         self.today = calendar.startOfDay(for: today)
 
         let selectedDate = calendar.startOfDay(for: today)
@@ -199,8 +216,14 @@ final class AppViewModel {
             indexingConvention = saved
         }
 
+        if let raw = sharedDefaults.string(forKey: Self.calendarFeaturedNumberKey),
+           let saved = CalendarFeaturedNumber(rawValue: raw) {
+            calendarFeaturedNumber = saved
+        }
+
         persistPreference(searchPreference.rawValue, forKey: Self.searchPreferenceKey)
         persistPreference(indexingConvention.rawValue, forKey: Self.indexingConventionKey)
+        persistPreference(calendarFeaturedNumber.rawValue, forKey: Self.calendarFeaturedNumberKey)
 
         Task { await self.load() }
     }
@@ -216,11 +239,17 @@ final class AppViewModel {
     }
 
     var isSelectedDateInRange: Bool {
-        repository.isInBundledRange(selectedDate)
+        guard let range = repository.indexedYearRange(for: calendarFeaturedNumber) else { return false }
+        let year = calendar.component(.year, from: selectedDate)
+        return range.contains(year)
+    }
+
+    var isBundledIndexAvailable: Bool {
+        repository.indexedYearRange(for: calendarFeaturedNumber) != nil
     }
 
     var indexedYearRange: String {
-        guard let range = repository.indexedYearRange else { return "" }
+        guard let range = repository.indexedYearRange(for: calendarFeaturedNumber) else { return "" }
         return "\(range.lowerBound)–\(range.upperBound)"
     }
 
@@ -229,7 +258,36 @@ final class AppViewModel {
     }
 
     var isDisplayedMonthInBundledRange: Bool {
-        repository.isInBundledRange(displayedMonth)
+        guard let range = repository.indexedYearRange(for: calendarFeaturedNumber) else { return false }
+        let year = calendar.component(.year, from: displayedMonth)
+        return range.contains(year)
+    }
+
+    var isCalendarHeatMapVisible: Bool {
+        // Requirement: all numbers are treated as equals — every calendar mode is a heat map.
+        // If an index is still loading (or missing), we keep the heat-map UI and simply show
+        // an "index unavailable" state in header + dimmed grid.
+        calendarFeaturedNumber.usesHeatMap
+    }
+
+    var calendarHeaderText: String {
+        guard calendarFeaturedNumber.usesHeatMap else { return calendarFeaturedNumber.heroCopy }
+        guard isBundledIndexAvailable else { return "Bundled index unavailable for \(calendarFeaturedNumber.title)." }
+        return isDisplayedMonthInBundledRange
+            ? calendarFeaturedNumber.heroCopy
+            : "This month is outside the bundled index range (\(indexedYearRange))."
+    }
+
+    var calendarLegendText: String {
+        calendarFeaturedNumber.legendText
+    }
+
+    var calendarModeTitle: String {
+        "Heat Map"
+    }
+
+    var calendarModeValue: String {
+        "Exact \(calendarFeaturedNumber.heatMapSymbol) hits"
     }
 
     // A snapshot of the current result ready to hand to ShareLink / share sheet.
@@ -244,11 +302,11 @@ final class AppViewModel {
     }
 
     var excerptRadius: Int {
-        repository.excerptRadius
+        repository.excerptRadius(for: calendarFeaturedNumber)
     }
 
     var piStats: PiStats? {
-        repository.piStats
+        repository.stats(for: calendarFeaturedNumber)
     }
 
     // The exact digit string shown in the canvas — uses the best match query if found,
@@ -264,13 +322,15 @@ final class AppViewModel {
         }
         if let bestMatch {
             let displayed = displayedPosition(for: bestMatch.storedPosition)
-            let sourcePrefix = lookupSummary?.source == .live ? "Live" : "Exact"
-            return "\(sourcePrefix) \(bestMatch.format.displayName) hit at digit \(displayed)"
+            return "Exact \(calendarFeaturedNumber.heatMapSymbol) \(bestMatch.format.displayName) hit at digit \(displayed)"
+        }
+        if !isBundledIndexAvailable {
+            return "Bundled index unavailable."
         }
         if !isSelectedDateInRange {
-            return isLoading ? "Searching live pi lookup..." : "Searching outside bundled range (\(indexedYearRange))"
+            return "Outside bundled range (\(indexedYearRange))"
         }
-        return "No exact \(searchPreference.summary) hit in the first 5 billion digits of pi"
+        return "No exact \(searchPreference.summary) hit in the bundled digits of \(calendarFeaturedNumber.heatMapSymbol)"
     }
 
     /// Heat level of the best match for display in the result strip.
@@ -298,17 +358,16 @@ final class AppViewModel {
         }
         if let bestMatch {
             let displayed = displayedPosition(for: bestMatch.storedPosition)
-            let src = lookupSummary?.source == .live ? "via live lookup" : "from the bundled index"
-            return "\(dateString) appears in pi \(src) as the exact \(bestMatch.format.displayName) sequence \(bestMatch.query) at digit \(displayed) (\(indexingConvention.label))."
+            return "\(dateString) appears in \(calendarFeaturedNumber.heatMapSymbol) as the exact \(bestMatch.format.displayName) sequence \(bestMatch.query) at digit \(displayed) (\(indexingConvention.label))."
         }
         if !isSelectedDateInRange {
             return "\(dateString) is outside the search range (\(indexedYearRange))."
         }
-        return "\(dateString) does not appear as an exact \(searchPreference.summary) sequence in the first 5 billion digits of pi."
+        return "\(dateString) does not appear as an exact \(searchPreference.summary) sequence in the bundled digits of \(calendarFeaturedNumber.heatMapSymbol)."
     }
 
     var selectedDateFunFact: String? {
-        PiDelightCopy.detailFact(for: selectedDate, bestMatch: bestMatch)
+        PiDelightCopy.detailFact(for: calendarFeaturedNumber, date: selectedDate, bestMatch: bestMatch)
     }
 
     var rankedSavedDates: [RankedSavedDate] {
@@ -363,6 +422,28 @@ final class AppViewModel {
         refreshMonth()
     }
 
+    func setCalendarFeaturedNumber(_ featuredNumber: CalendarFeaturedNumber) {
+        guard isIndexResourceBundled(for: featuredNumber) else {
+            nerdyPopup = NerdyPopup(
+                id: "missing-index-\(featuredNumber.rawValue)",
+                title: "Index Unavailable",
+                message: "The bundled digit index for \(featuredNumber.title) is not included in this build yet."
+            )
+            return
+        }
+        guard calendarFeaturedNumber != featuredNumber else { return }
+        calendarFeaturedNumber = featuredNumber
+        persistPreference(featuredNumber.rawValue, forKey: Self.calendarFeaturedNumberKey)
+        clearCaches()
+        scheduleSelectionRefresh()
+        refreshMonth()
+    }
+
+    func isIndexResourceBundled(for featuredNumber: CalendarFeaturedNumber) -> Bool {
+        // pi416 intentionally reuses pi's index.
+        Bundle.main.url(forResource: featuredNumber.indexResourceName, withExtension: "json") != nil
+    }
+
     func jumpToToday() { select(Date()) }
 
     // Called by the birthday contact picker — same as select() but marks
@@ -373,7 +454,6 @@ final class AppViewModel {
     }
 
     // Clears the current error and re-triggers the lookup for the selected date.
-    // Called by the retry button in DetailSheetView when a live lookup fails.
     func retryCurrentLookup() {
         errorMessage = nil
         scheduleSelectionRefresh()
@@ -434,12 +514,16 @@ final class AppViewModel {
         return displayedPosition(for: stored)
     }
 
+    func isCalendarFeatureDay(_ date: Date) -> Bool {
+        calendarFeaturedNumber.highlights(date, calendar: calendar)
+    }
+
     func rankedSavedDates(sortedBy sort: SavedDatesSortOption) -> [RankedSavedDate] {
-        let allPositions = repository.piStats?.bestDatePositions ?? []
+        let allPositions = repository.stats(for: calendarFeaturedNumber)?.bestDatePositions ?? []
         let generator = DateStringGenerator(calendar: calendar)
 
         let ranked = savedDatesStore.dates.map { saved -> RankedSavedDate in
-            let summary = repository.bundledSummary(for: saved.date, formats: SearchFormatPreference.all.formats)
+            let summary = repository.summary(for: calendarFeaturedNumber, date: saved.date, formats: SearchFormatPreference.all.formats)
             let best = summary.bestMatch
             let percentile = PiDelightCopy.rarityLabel(for: best?.storedPosition, among: allPositions)
             return RankedSavedDate(
@@ -482,6 +566,7 @@ final class AppViewModel {
     func shareableCard(style: ShareCardStyle, palette: ThemePalette) -> ShareableCard {
         ShareableCard(
             style: style,
+            featuredNumber: calendarFeaturedNumber,
             date: selectedDate,
             bestMatch: bestMatch,
             query: exactQuery,
@@ -496,10 +581,9 @@ final class AppViewModel {
         let leftDate = calendar.startOfDay(for: selectedDate)
         let rightDate = calendar.startOfDay(for: otherDate)
 
-        async let leftSummary = repositorySummary(for: leftDate)
-        async let rightSummary = repositorySummary(for: rightDate)
-
-        return await compareDates(
+        let leftSummary = repositorySummary(for: leftDate)
+        let rightSummary = repositorySummary(for: rightDate)
+        return compareDates(
             leftDate: leftDate,
             leftSummary: leftSummary,
             rightDate: rightDate,
@@ -511,8 +595,8 @@ final class AppViewModel {
         await compareCurrentDate(to: savedDate.date)
     }
 
-    func repositorySummary(for date: Date) async -> DateLookupSummary {
-        await repository.summary(for: date, formats: searchPreference.formats)
+    func repositorySummary(for date: Date) -> DateLookupSummary {
+        repository.summary(for: calendarFeaturedNumber, date: date, formats: searchPreference.formats)
     }
 
     func compareDates(
@@ -521,7 +605,7 @@ final class AppViewModel {
         rightDate: Date,
         rightSummary: DateLookupSummary
     ) -> DateBattleResult {
-        let positions = repository.piStats?.bestDatePositions ?? []
+        let positions = repository.stats(for: calendarFeaturedNumber)?.bestDatePositions ?? []
 
         let leftDisplayed = leftSummary.bestMatch.map { displayedPosition(for: $0.storedPosition) }
         let rightDisplayed = rightSummary.bestMatch.map { displayedPosition(for: $0.storedPosition) }
@@ -570,7 +654,7 @@ final class AppViewModel {
             right: right,
             winner: winner,
             winningMargin: margin,
-            verdict: PiDelightCopy.verdict(for: left, right: right, margin: margin)
+            verdict: PiDelightCopy.verdict(for: calendarFeaturedNumber, left: left, right: right, margin: margin)
         )
     }
 
@@ -579,14 +663,14 @@ final class AppViewModel {
     private func load() async {
         isLoading = true
         do {
-            try await repository.loadBundledIndex()
+            try await repository.loadBundledIndexes()
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
         }
         savedDatesStore.load()
-        // If the user has already opted in, keep the annual reminder scheduled.
-        Task { await NotificationService.schedulePiDayIfAuthorized() }
+        // If the user has already opted in, keep annual reminders scheduled.
+        Task { await NotificationService.scheduleFeaturedDaysIfAuthorized() }
         notificationAuthState = await NotificationService.authorizationState()
         clearCaches()
         scheduleSelectionRefresh()
@@ -595,8 +679,8 @@ final class AppViewModel {
     }
 
     // WHY: We cancel any in-flight lookup before starting a new one.
-    // This prevents a slow live lookup from clobbering results for a date the
-    // user already moved away from.
+    // This prevents an older lookup from clobbering results for a date the user
+    // already moved away from.
     private func scheduleSelectionRefresh() {
         let date = selectedDate
         lookupTask?.cancel()
@@ -614,28 +698,93 @@ final class AppViewModel {
         confettiPending = false
 
         let normalized = calendar.startOfDay(for: date)
-        let isLive = !repository.isInBundledRange(normalized)
+        isLoading = true
+        errorMessage = nil
 
-        if isLive {
-            isLoading = true
-            errorMessage = nil
-        }
-
-        let summary = await repository.summary(for: normalized, formats: searchPreference.formats)
+        let summary = repository.summary(for: calendarFeaturedNumber, date: normalized, formats: searchPreference.formats)
 
         guard !Task.isCancelled, calendar.isDate(normalized, inSameDayAs: selectedDate) else { return }
 
         lookupSummary = summary
         errorMessage = summary.errorMessage
-        // WHY unconditional: if the user navigates from a live date (which sets
-        // isLoading = true) to a bundled date before the live lookup completes,
-        // the live task is cancelled but isLoading stays true. The bundled task
-        // must clear it regardless of whether it was the one that set it.
         isLoading = false
 
         if shouldCelebrate && summary.bestMatch != nil {
             birthdayConfettiVersion += 1
         }
+
+        triggerNerdyCelebrationsIfNeeded(for: normalized)
+    }
+
+    private func triggerNerdyCelebrationsIfNeeded(for date: Date) {
+        guard let popup = nerdyPopupFor(date: date) else { return }
+        guard !shownPopupIDs.contains(popup.id) else { return }
+        shownPopupIDs.insert(popup.id)
+        nerdyPopup = popup
+
+        if popup.id.hasPrefix("confetti:") {
+            specialConfettiVersion += 1
+        }
+    }
+
+    private func nerdyPopupFor(date: Date) -> NerdyPopup? {
+        let month = calendar.component(.month, from: date)
+        let day = calendar.component(.day, from: date)
+
+        // 1) Featured-number specific celebration day (confetti-worthy).
+        if calendarFeaturedNumber.highlights(date, calendar: calendar) {
+            switch calendarFeaturedNumber {
+            case .pi:
+                return NerdyPopup(
+                    id: "confetti:pi-day",
+                    title: "Pi Day",
+                    message: "Pi Day is celebrated on March 14 (3.14), a nod to the first digits of π."
+                )
+            case .pi416:
+                return NerdyPopup(
+                    id: "confetti:pi-416",
+                    title: "Alternate Pi Day (4.16)",
+                    message: "Some people also celebrate π on April 16 because 3.1416 is π rounded to four decimals. Same π — different excuse to celebrate."
+                )
+            case .tau:
+                return NerdyPopup(
+                    id: "confetti:tau-day",
+                    title: "Tau Day",
+                    message: "Tau Day is June 28 (6.28), a nod to τ ≈ 6.28318… (where τ = 2π)."
+                )
+            case .euler:
+                return NerdyPopup(
+                    id: "confetti:euler-day",
+                    title: "Euler’s Number Day",
+                    message: "A nerdy nod to e ≈ 2.71828…. (The date 2/7 is often used as an informal celebration.)"
+                )
+            case .goldenRatio:
+                return NerdyPopup(
+                    id: "confetti:phi-day",
+                    title: "Golden Ratio Day",
+                    message: "A nerdy nod to φ ≈ 1.61803…. (The date 1/6 is often used as an informal celebration.)"
+                )
+            case .planck:
+                return NerdyPopup(
+                    id: "confetti:planck-day",
+                    title: "World Quantum Day",
+                    message: "April 14 (4.14) is celebrated as World Quantum Day, a nod to 4.14×10⁻¹⁵ eV·s — the Planck constant expressed in eV·s."
+                )
+            }
+        }
+
+        // 2) Bonus π-specific nerd holiday: 22/7 (classic rational approximation).
+        if calendarFeaturedNumber == .pi || calendarFeaturedNumber == .pi416 {
+            if month == 7 && day == 22 {
+                return NerdyPopup(
+                    id: "pi-approx-22-7",
+                    title: "Pi Approximation Day (22/7)",
+                    message: "22/7 is a famous rational approximation of π. It’s not exact, but it’s historically important and delightfully nerdy."
+                )
+            }
+        }
+
+        return nil
     }
 
     private func refreshMonth() {
@@ -718,22 +867,13 @@ final class AppViewModel {
             uniqueKeysWithValues: section.days
                 .filter(\.isInDisplayedMonth)
                 .map { day -> (Date, DaySummary) in
-                    let isInBundledRange = repository.isInBundledRange(day.date)
-                    let result = isInBundledRange
-                        ? repository.bundledSummary(for: day.date, formats: searchPreference.formats)
-                        : DateLookupSummary(
-                            isoDate: generator.isoDateString(for: day.date),
-                            matches: [],
-                            bestMatch: nil,
-                            source: .live,
-                            errorMessage: nil
-                        )
+                    let result = calendarBundledSummary(for: day.date)
                     return (day.date, DaySummary(
                         date: day.date,
                         dayNumber: day.dayNumber,
                         isoDate: generator.isoDateString(for: day.date),
                         isSelected: calendar.isDate(day.date, inSameDayAs: selectedDate),
-                        isInBundledRange: isInBundledRange,
+                        isInBundledRange: result.source == .bundled,
                         bestStoredPosition: result.bestMatch?.storedPosition,
                         foundFormats: result.foundCount
                     ))
@@ -760,7 +900,7 @@ final class AppViewModel {
     private func monthCacheKey(for month: Date) -> String {
         // WHY generator (not new DateStringGenerator()): generator is a stored
         // property — no allocation per call.
-        "\(generator.isoDateString(for: month))-\(searchPreference.rawValue)"
+        return "\(generator.isoDateString(for: month))-\(searchPreference.rawValue)-\(calendarFeaturedNumber.rawValue)"
     }
 
     private func clearCaches() {
@@ -768,6 +908,10 @@ final class AppViewModel {
         monthSummaryCache.removeAll()
         monthSummaryCacheKeys.removeAll()
         repository.clearCache()
+    }
+
+    private func calendarBundledSummary(for date: Date) -> DateLookupSummary {
+        repository.summary(for: calendarFeaturedNumber, date: date, formats: searchPreference.formats)
     }
 
     private var sharedDefaults: UserDefaults {

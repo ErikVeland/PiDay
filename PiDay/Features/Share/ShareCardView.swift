@@ -20,6 +20,7 @@ private struct ShareCardRenderError: LocalizedError {
 // `DataRepresentation` says "when the receiver wants a PNG, render it for them."
 struct ShareableCard: Transferable {
     let style: ShareCardStyle
+    let featuredNumber: CalendarFeaturedNumber
     let date: Date
     let bestMatch: BestPiMatch?
     let query: String
@@ -37,6 +38,7 @@ struct ShareableCard: Transferable {
     func render() -> UIImage? {
         let card = ShareCardView(
             style: style,
+            featuredNumber: featuredNumber,
             date: date,
             bestMatch: bestMatch,
             query: query,
@@ -77,6 +79,7 @@ struct ShareableCard: Transferable {
 // available in that context. All data must come through the initializer.
 struct ShareCardView: View {
     let style: ShareCardStyle
+    let featuredNumber: CalendarFeaturedNumber
     let date: Date
     let bestMatch: BestPiMatch?
     let query: String
@@ -114,7 +117,7 @@ struct ShareCardView: View {
                 Spacer()
 
                 // Footer
-                Text("Find your date in π")
+                Text("Find your date in \(featuredNumber.heatMapSymbol)")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle((palette.mutedInk.opacity(0.5) as Color))
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -169,7 +172,7 @@ struct ShareCardView: View {
                 .foregroundStyle((palette.mutedInk.opacity(0.7) as Color))
                 .padding(.bottom, 8)
 
-            // Excerpt strip — shows the actual pi digits around the match
+            // Excerpt strip — shows the actual digits around the match
             excerptLine(match: match)
         }
     }
@@ -185,7 +188,7 @@ struct ShareCardView: View {
                 nerdChip(title: "Query", value: query)
             }
 
-            if let funFact = PiDelightCopy.detailFact(for: date, bestMatch: bestMatch) {
+            if let funFact = PiDelightCopy.detailFact(for: featuredNumber, date: date, bestMatch: bestMatch) {
                 Text(funFact)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(palette.mutedInk)
@@ -199,7 +202,7 @@ struct ShareCardView: View {
                 .font(.system(size: 38, weight: .bold, design: .monospaced))
                 .foregroundStyle((palette.mutedInk.opacity(0.35) as Color))
 
-            Text("Not in the first 5 billion\ndigits of pi")
+            Text("Not found in bundled\ndigits of \(featuredNumber.heatMapSymbol)")
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundStyle(palette.mutedInk)
                 .lineSpacing(4)
@@ -210,7 +213,7 @@ struct ShareCardView: View {
 
     private var wordmark: some View {
         HStack(alignment: .firstTextBaseline, spacing: -2) {
-            Text("∏")
+            Text(featuredNumber.logoSymbol)
                 .font(.system(size: 16, weight: .black, design: .serif))
                 .italic()
             Text("day")
@@ -276,13 +279,14 @@ struct ShareCardView: View {
 }
 
 struct BattleShareableCard: Transferable {
+    let featuredNumber: CalendarFeaturedNumber
     let battle: DateBattleResult
     let palette: ThemePalette
 
     @MainActor
     func render() -> UIImage? {
         let renderer = ImageRenderer(
-            content: BattleShareCardView(battle: battle, palette: palette)
+            content: BattleShareCardView(featuredNumber: featuredNumber, battle: battle, palette: palette)
                 .frame(width: 360, height: 360)
         )
         renderer.scale = 3.0
@@ -301,6 +305,7 @@ struct BattleShareableCard: Transferable {
 }
 
 struct BattleShareCardView: View {
+    let featuredNumber: CalendarFeaturedNumber
     let battle: DateBattleResult
     let palette: ThemePalette
 
@@ -332,7 +337,7 @@ struct BattleShareCardView: View {
 
                 Spacer()
 
-                Text("Find your date in π")
+                Text("Find your date in \(featuredNumber.heatMapSymbol)")
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle((palette.mutedInk.opacity(0.55) as Color))
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -343,7 +348,7 @@ struct BattleShareCardView: View {
 
     private var shareWordmark: some View {
         HStack(alignment: .firstTextBaseline, spacing: -2) {
-            Text("∏")
+            Text(featuredNumber.logoSymbol)
                 .font(.system(size: 16, weight: .black, design: .serif))
                 .italic()
             Text("day")
@@ -391,6 +396,7 @@ struct BattleShareCardView: View {
 }
 
 struct ShareOptionsSheet: View {
+    @Environment(AppViewModel.self) private var viewModel
     @Environment(PreferencesStore.self) private var preferences
     @Environment(\.dismiss) private var dismiss
 
@@ -604,7 +610,7 @@ struct DateBattleView: View {
                 .foregroundStyle(palette.ink)
 
             ShareLink(
-                item: BattleShareableCard(battle: battle, palette: palette),
+                item: BattleShareableCard(featuredNumber: viewModel.calendarFeaturedNumber, battle: battle, palette: palette),
                 preview: SharePreview("PiDay Battle", image: Image(systemName: "bolt.shield"))
             ) {
                 Label("Share battle card", systemImage: "square.and.arrow.up")
@@ -645,9 +651,9 @@ struct DateBattleView: View {
         isLoading = true
         let leftDate = Calendar(identifier: .gregorian).startOfDay(for: anchorDate)
         let rightDate = Calendar(identifier: .gregorian).startOfDay(for: opponentDate)
-        async let leftSummary = viewModel.repositorySummary(for: leftDate)
-        async let rightSummary = viewModel.repositorySummary(for: rightDate)
-        let result = await viewModel.compareDates(
+        let leftSummary = viewModel.repositorySummary(for: leftDate)
+        let rightSummary = viewModel.repositorySummary(for: rightDate)
+        let result = viewModel.compareDates(
             leftDate: leftDate,
             leftSummary: leftSummary,
             rightDate: rightDate,

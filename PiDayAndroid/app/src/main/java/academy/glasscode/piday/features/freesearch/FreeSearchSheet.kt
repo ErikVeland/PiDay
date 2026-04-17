@@ -23,6 +23,7 @@ fun FreeSearchSheet(
     val result     by vm.result.collectAsStateWithLifecycle()
     val isSearching by vm.isSearching.collectAsStateWithLifecycle()
     val error      by vm.error.collectAsStateWithLifecycle()
+    val easterEgg = academy.glasscode.piday.core.domain.PiDelightCopy.freeSearchReaction(query)
 
     DisposableEffect(Unit) { onDispose { vm.clear() } }
 
@@ -70,9 +71,16 @@ fun FreeSearchSheet(
                         color      = palette.onBackground,
                         fontFamily = FontFamily.Monospace
                     )
+                    easterEgg?.let {
+                        Spacer(Modifier.height(8.dp))
+                        Text(it, color = palette.accent, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
                 query.length >= 2 -> Text(
-                    "Not found in first 5 billion digits",
+                    buildString {
+                        append("Not found in first 5 billion digits")
+                        easterEgg?.let { append("\n$it") }
+                    },
                     color = palette.onBackground.copy(alpha = 0.5f)
                 )
             }

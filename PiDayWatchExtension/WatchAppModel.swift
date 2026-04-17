@@ -5,15 +5,17 @@ import Observation
 @Observable
 final class WatchAppModel {
     private static let indexingConventionKey = "academy.glasscode.piday.indexingConvention"
+    private static let calendarFeaturedNumberKey = "academy.glasscode.piday.calendarFeaturedNumber"
     private static let appGroupID = "group.academy.glasscode.piday"
 
     var selectedDate: Date
     var lookupSummary: DateLookupSummary?
     var isLoading = false
     var errorMessage: String?
+    var featuredNumber: CalendarFeaturedNumber = .pi
 
     private let calendar: Calendar
-    private let repository: any PiRepository
+    private let repository: any FeaturedNumberRepository
     private let generator = DateStringGenerator()
     private let searchPreference: SearchFormatPreference = .international
     private var hasLoadedIndex = false
@@ -21,11 +23,15 @@ final class WatchAppModel {
     init(
         today: Date = Date(),
         calendar: Calendar = Calendar(identifier: .gregorian),
-        repository: (any PiRepository)? = nil
+        repository: (any FeaturedNumberRepository)? = nil
     ) {
         self.calendar = calendar
-        self.repository = repository ?? DefaultPiRepository()
+        self.repository = repository ?? DefaultFeaturedNumberRepository()
         self.selectedDate = calendar.startOfDay(for: today)
+        if let raw = sharedDefaults.string(forKey: Self.calendarFeaturedNumberKey),
+           let saved = CalendarFeaturedNumber(rawValue: raw) {
+            featuredNumber = saved
+        }
     }
 
     var bestMatch: BestPiMatch? {
@@ -54,7 +60,7 @@ final class WatchAppModel {
         if let bestMatch {
             let rarity = PiDelightCopy.rarityLabel(
                 for: bestMatch.storedPosition,
-                among: repository.piStats?.bestDatePositions ?? []
+                among: repository.stats(for: featuredNumber)?.bestDatePositions ?? []
             )
             return "\(bestMatch.format.displayName) at digit \(displayedPosition(for: bestMatch.storedPosition)) · \(rarity)"
         }
@@ -62,7 +68,7 @@ final class WatchAppModel {
     }
 
     var funFact: String? {
-        PiDelightCopy.detailFact(for: selectedDate, bestMatch: bestMatch)
+        PiDelightCopy.detailFact(for: featuredNumber, date: selectedDate, bestMatch: bestMatch)
     }
 
     func loadIfNeeded() async {
@@ -75,7 +81,7 @@ final class WatchAppModel {
         errorMessage = nil
 
         do {
-            try await repository.loadBundledIndex()
+            try await repository.loadBundledIndexes()
             hasLoadedIndex = true
             await refresh()
         } catch {
@@ -99,7 +105,7 @@ final class WatchAppModel {
     private func refresh() async {
         isLoading = true
         errorMessage = nil
-        let summary = await repository.summary(for: selectedDate, formats: searchPreference.formats)
+        let summary = repository.summary(for: featuredNumber, date: selectedDate, formats: searchPreference.formats)
         lookupSummary = summary
         errorMessage = summary.errorMessage
         isLoading = false
@@ -110,7 +116,10 @@ final class WatchAppModel {
     }
 
     private var indexingConventionRawValue: String {
-        let defaults = UserDefaults(suiteName: Self.appGroupID) ?? .standard
-        return defaults.string(forKey: Self.indexingConventionKey) ?? "oneBased"
+        sharedDefaults.string(forKey: Self.indexingConventionKey) ?? "oneBased"
+    }
+
+    private var sharedDefaults: UserDefaults {
+        UserDefaults(suiteName: Self.appGroupID) ?? .standard
     }
 }

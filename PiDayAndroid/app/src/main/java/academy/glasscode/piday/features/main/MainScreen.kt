@@ -1,17 +1,21 @@
 package academy.glasscode.piday.features.main
 
-import academy.glasscode.piday.design.AppPalette
 import academy.glasscode.piday.design.AppThemeOption
 import academy.glasscode.piday.design.LocalAppPalette
+import academy.glasscode.piday.core.domain.CalendarFeaturedNumber
+import academy.glasscode.piday.features.battle.DateBattleSheet
 import academy.glasscode.piday.features.calendar.CalendarSheet
 import academy.glasscode.piday.features.canvas.PiCanvasView
 import academy.glasscode.piday.features.detail.DetailSheet
-import academy.glasscode.piday.features.freesearch.FreeSearchSheet
 import academy.glasscode.piday.features.preferences.PreferencesScreen
 import academy.glasscode.piday.features.saveddates.SavedDatesSheet
+import academy.glasscode.piday.features.share.ShareSheet
+import academy.glasscode.piday.features.stats.StatsSheet
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -34,12 +38,16 @@ fun MainScreen(
     val selectedDate   by vm.selectedDate.collectAsStateWithLifecycle()
     val lookupSummary  by vm.lookupSummary.collectAsStateWithLifecycle()
     val isLoading      by vm.isLoading.collectAsStateWithLifecycle()
+    val featured       by vm.featuredNumber.collectAsStateWithLifecycle()
 
     var showCalendar    by remember { mutableStateOf(false) }
     var showDetail      by remember { mutableStateOf(false) }
     var showPreferences by remember { mutableStateOf(false) }
-    var showFreeSearch  by remember { mutableStateOf(false) }
     var showSavedDates  by remember { mutableStateOf(false) }
+    var showStats       by remember { mutableStateOf(false) }
+    var showBattle      by remember { mutableStateOf(false) }
+    var showShare       by remember { mutableStateOf(false) }
+    var showFeaturedMenu by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -55,7 +63,7 @@ fun MainScreen(
             modifier   = Modifier
                 .fillMaxSize()
                 .semantics {
-                    contentDescription = "Pi digit canvas. Swipe left or right to change date."
+                    contentDescription = "Digit canvas. Swipe left or right to change date."
                 },
             onSwipeLeft  = { vm.nextDay() },
             onSwipeRight = { vm.previousDay() },
@@ -70,15 +78,33 @@ fun MainScreen(
             )
         }
 
-        // Wordmark — centred at top
-        Text(
-            text     = "π",
-            fontSize = 28.sp,
-            color    = palette.accent.copy(alpha = 0.7f),
+        // Wordmark / featured-number picker — centred at top
+        Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 16.dp)
-        )
+        ) {
+            Text(
+                text = featured.logoSymbol,
+                fontSize = 28.sp,
+                color = palette.accent.copy(alpha = 0.7f),
+                modifier = Modifier.clickable { showFeaturedMenu = true }
+            )
+            DropdownMenu(
+                expanded = showFeaturedMenu,
+                onDismissRequest = { showFeaturedMenu = false }
+            ) {
+                CalendarFeaturedNumber.entries.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text("${item.logoSymbol}  ${item.title}") },
+                        onClick = {
+                            showFeaturedMenu = false
+                            vm.setFeaturedNumber(item)
+                        }
+                    )
+                }
+            }
+        }
 
         // Bottom control bar
         Row(
@@ -94,6 +120,14 @@ fun MainScreen(
                     Icons.Default.CalendarMonth,
                     contentDescription = "Open calendar heat map",
                     tint               = palette.accent
+                )
+            }
+
+            IconButton(onClick = { showStats = true }) {
+                Icon(
+                    Icons.Default.BarChart,
+                    contentDescription = "Open stats",
+                    tint = palette.accent
                 )
             }
 
@@ -133,8 +167,9 @@ fun MainScreen(
             palette           = palette,
             onDismiss         = { showDetail = false },
             onOpenPreferences = { showDetail = false; showPreferences = true },
-            onOpenFreeSearch  = { showDetail = false; showFreeSearch = true },
-            onOpenSavedDates  = { showDetail = false; showSavedDates = true }
+            onOpenSavedDates  = { showDetail = false; showSavedDates = true },
+            onOpenBattle      = { showDetail = false; showBattle = true },
+            onOpenShare       = { showDetail = false; showShare = true }
         )
     }
 
@@ -150,12 +185,9 @@ fun MainScreen(
         )
     }
 
-    if (showFreeSearch) {
-        FreeSearchSheet(palette = palette, onDismiss = { showFreeSearch = false })
-    }
-
     if (showSavedDates) {
         SavedDatesSheet(
+            vm            = vm,
             palette       = palette,
             onDismiss     = { showSavedDates = false },
             onDateSelected = { date ->
@@ -163,5 +195,22 @@ fun MainScreen(
                 showSavedDates = false
             }
         )
+    }
+
+    if (showStats) {
+        StatsSheet(vm = vm, palette = palette, onDismiss = { showStats = false })
+    }
+
+    if (showBattle) {
+        DateBattleSheet(
+            vm = vm,
+            palette = palette,
+            anchorDate = selectedDate,
+            onDismiss = { showBattle = false }
+        )
+    }
+
+    if (showShare) {
+        ShareSheet(vm = vm, palette = palette, onDismiss = { showShare = false })
     }
 }

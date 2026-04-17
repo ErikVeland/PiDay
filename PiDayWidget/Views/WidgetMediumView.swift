@@ -2,9 +2,9 @@ import SwiftUI
 import WidgetKit
 
 // WHY: The medium widget (~329×155pt) has roughly twice the width of small.
-// The killer feature here is showing actual pi digits around the match —
+// The killer feature here is showing actual digits around the match —
 // the same excerpt that makes the main app canvas special, in condensed form.
-// This gives users an at-a-glance feel for WHERE in pi their date lives.
+// This gives users an at-a-glance feel for WHERE in the digit stream their date lives.
 
 struct WidgetMediumView: View {
     let entry: PiDayEntry
@@ -24,7 +24,7 @@ struct WidgetMediumView: View {
 
     private var headerRow: some View {
         HStack(alignment: .firstTextBaseline) {
-            PiWordmark(palette: entry.palette)
+            PiWordmark(symbol: entry.featuredNumber.logoSymbol, palette: entry.palette)
             Spacer()
             HStack(spacing: 8) {
                 Button(intent: AdvanceDateIntent(direction: .previous)) {
@@ -65,7 +65,7 @@ struct WidgetMediumView: View {
                 Text(heroQuery)
                     .font(.system(.body, design: .monospaced, weight: .semibold))
                     .foregroundStyle(entry.palette.mutedInk.opacity(0.4))
-                Text("\(format.displayName)  ·  not found in first 5 billion digits")
+                Text("\(format.displayName)  ·  not found in bundled digits")
                     .font(.caption)
                     .foregroundStyle(entry.palette.mutedInk)
             }
@@ -84,7 +84,7 @@ struct WidgetMediumView: View {
 
     // MARK: - Excerpt line
 
-    // Renders the pi digit excerpt with the matching sequence color-coded.
+    // Renders the digit excerpt with the matching sequence color-coded.
     // e.g.:  …41592653 [14][03][2026] 897932384…
     //                   day  mo  year
     private func excerptLine(excerpt: WidgetExcerpt, query: String, format: DateFormatOption) -> some View {

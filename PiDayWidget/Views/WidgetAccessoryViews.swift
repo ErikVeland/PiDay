@@ -21,7 +21,7 @@ struct WidgetCircularView: View {
             AccessoryWidgetBackground()
 
             VStack(spacing: 0) {
-                Text("π")
+                Text(entry.featuredNumber.heatMapSymbol)
                     .font(.system(size: 14, weight: .black, design: .serif))
                     .italic()
                     .foregroundStyle(.primary)
@@ -108,11 +108,11 @@ struct WidgetInlineView: View {
         // automatically. Custom foreground colors are ignored.
         switch entry.result {
         case let .found(query, _, position, _):
-            Text("π \(query) · \(position.formatted(.number))")
+            Text("\(entry.featuredNumber.heatMapSymbol) \(query) · \(position.formatted(.number))")
         case let .notFound(heroQuery, _):
-            Text("π \(heroQuery) · not found")
+            Text("\(entry.featuredNumber.heatMapSymbol) \(heroQuery) · not found")
         case .outOfRange:
-            Text("π · out of range")
+            Text("\(entry.featuredNumber.heatMapSymbol) · out of range")
         }
     }
 }

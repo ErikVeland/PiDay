@@ -13,6 +13,7 @@ struct PiDayEntry: TimelineEntry {
     // Required by TimelineEntry: the date at which WidgetKit should display this entry.
     // For PiDay this is midnight — the start of the day we searched.
     let date: Date
+    let featuredNumber: CalendarFeaturedNumber
     let result: EntryResult
     let upcomingResults: [Date: EntryResult]?
     let stats: PiStats?
@@ -20,14 +21,15 @@ struct PiDayEntry: TimelineEntry {
     let preferredColorScheme: ColorScheme?
 
     // WHY relevance: the Smart Stack uses this score to decide which widget to surface.
-    // A date that appears very early in pi (low position) is more remarkable and should
-    // be promoted. Pi Day itself (March 14) gets the highest possible score.
+    // A date that appears very early (low position) is more remarkable and should
+    // be promoted. The featured-day itself (e.g. 03-14 for π, 06-28 for τ) is
+    // inherently special but we keep the heuristic purely position-based here.
     // score is in [0, 1]; duration tells WidgetKit how long this relevance is valid.
     var relevance: TimelineEntryRelevance? {
         switch result {
         case let .found(_, _, storedPosition, _):
             // log10(1) = 0 → score 1.0 (appears at digit 1 — maximum interest)
-            // log10(10_000_000) = 7 → score 0.0 (very deep in pi — minimum interest)
+    // log10(10_000_000) = 7 → score 0.0 (very deep — minimum interest)
             let score = Float(max(0.0, 1.0 - log10(Double(max(1, storedPosition))) / 7.0))
             return TimelineEntryRelevance(score: score, duration: 86_400)
         case .notFound, .outOfRange:
@@ -36,12 +38,12 @@ struct PiDayEntry: TimelineEntry {
     }
 
     enum EntryResult: Equatable {
-        // Date found in pi — carries everything needed to render the result.
+        // Date found in the active digit index — carries everything needed to render the result.
         case found(
             query: String,
             format: DateFormatOption,
             storedPosition: Int,
-            // A short window of pi digits centered on the query, pre-sliced by the provider.
+            // A short window of digits centered on the query, pre-sliced by the provider.
             // Pre-computing it here keeps the view pure: no string slicing in the view layer.
             excerpt: WidgetExcerpt
         )
@@ -68,6 +70,7 @@ extension PiDayEntry {
     // Must be instant — no file I/O allowed.
     static let placeholder = PiDayEntry(
         date: Calendar.current.startOfDay(for: Date()),
+        featuredNumber: .pi,
         result: .found(
             query: "14032026",
             format: .ddmmyyyy,
@@ -82,6 +85,7 @@ extension PiDayEntry {
 
     static let notFoundSample = PiDayEntry(
         date: Calendar.current.startOfDay(for: Date()),
+        featuredNumber: .pi,
         result: .notFound(heroQuery: "01012099", format: .ddmmyyyy),
         upcomingResults: nil,
         stats: nil,
@@ -91,6 +95,7 @@ extension PiDayEntry {
 
     static let outOfRangeSample = PiDayEntry(
         date: Calendar.current.startOfDay(for: Date()),
+        featuredNumber: .pi,
         result: .outOfRange,
         upcomingResults: nil,
         stats: nil,

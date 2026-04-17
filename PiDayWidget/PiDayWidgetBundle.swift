@@ -31,7 +31,7 @@ struct PiDayWidget: Widget {
             PiDayWidgetView(entry: entry)
         }
         .configurationDisplayName("PiDay")
-        .description("See where today's date appears in the digits of pi.")
+        .description("See where today's date appears in the selected number's digits.")
         // WHY all three families: .systemSmall for a glance, .systemMedium
         // for an excerpt, and .systemLarge for the nerdy stats dashboard.
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
@@ -56,7 +56,7 @@ struct PiDayLockScreenWidget: Widget {
             PiDayWidgetView(entry: entry)
         }
         .configurationDisplayName("PiDay")
-        .description("See where today's date appears in pi — on your Lock Screen.")
+        .description("See where today's date appears — on your Lock Screen.")
         // WHY all three accessory families: each occupies a different slot on
         // the Lock Screen and Apple Watch. Circular = corner/Watch; Rectangular =
         // below-clock bar; Inline = single text line above the clock.

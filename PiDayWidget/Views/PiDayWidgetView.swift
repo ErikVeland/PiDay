@@ -5,7 +5,7 @@ import WidgetKit
 // Its only job is to read the widget family from the environment and
 // dispatch to the right layout. Every size can have completely different
 // information density — the small widget shows a single result,
-// the medium shows an excerpt of actual pi digits.
+// the medium shows an excerpt of actual digits.
 
 struct PiDayWidgetView: View {
     let entry: PiDayEntry
@@ -57,11 +57,12 @@ struct PiDayWidgetView: View {
 // It's small and subtle — the widget isn't the place for branding,
 // but a tiny mark helps users recognize which app the widget belongs to.
 struct PiWordmark: View {
+    let symbol: String
     let palette: ThemePalette
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: -2) {
-            Text("∏")
+            Text(symbol)
                 .font(.system(size: 13, weight: .black, design: .serif))
                 .italic()
             Text("day")

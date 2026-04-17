@@ -37,7 +37,7 @@ struct DaySummary: Identifiable, Equatable {
     }
 
     // WHY bestStoredPosition (not displayedBestPosition): heat levels reflect the
-    // true position in pi. The display convention (0-based vs 1-based) is a UI
+    // true position in the digit stream. The display convention (0-based vs 1-based) is a UI
     // labeling choice that should NOT shift which heat bucket a date falls into.
     // A date at stored position 1,000 is always "warm" regardless of whether the
     // user prefers to call it digit 999 or digit 1,000.

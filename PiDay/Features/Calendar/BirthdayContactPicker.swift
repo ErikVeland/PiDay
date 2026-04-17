@@ -95,6 +95,7 @@ struct ContactPickerPresenter: UIViewControllerRepresentable {
 // only needs to scroll the year wheel to complete their birthday.
 struct BirthdayYearPromptView: View {
     let partial: PartialBirthday
+    let featuredSymbol: String
     let onConfirm: (Date) -> Void
 
     @Environment(PreferencesStore.self) private var preferences
@@ -102,8 +103,9 @@ struct BirthdayYearPromptView: View {
 
     @State private var selectedDate: Date
 
-    init(partial: PartialBirthday, onConfirm: @escaping (Date) -> Void) {
+    init(partial: PartialBirthday, featuredSymbol: String = "π", onConfirm: @escaping (Date) -> Void) {
         self.partial = partial
+        self.featuredSymbol = featuredSymbol
         self.onConfirm = onConfirm
         // WHY -30 years: a neutral starting point that doesn't skew toward infants
         // or centenarians. The user corrects the year with a single scroll gesture.
@@ -171,7 +173,7 @@ struct BirthdayYearPromptView: View {
                     onConfirm(selectedDate)
                     dismiss()
                 } label: {
-                    Text("Find My Birthday in π")
+                    Text("Find My Birthday in \(featuredSymbol)")
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }

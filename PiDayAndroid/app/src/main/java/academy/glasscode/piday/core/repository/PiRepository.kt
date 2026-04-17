@@ -2,6 +2,7 @@ package academy.glasscode.piday.core.repository
 
 import academy.glasscode.piday.core.domain.DateFormatOption
 import academy.glasscode.piday.core.domain.DateLookupSummary
+import academy.glasscode.piday.core.domain.PiStats
 import java.io.InputStream
 import java.time.LocalDate
 
@@ -15,4 +16,5 @@ interface PiRepository {
     fun clearCache()
     val indexedYearRange: IntRange?
     val excerptRadius: Int
+    val piStats: PiStats?
 }

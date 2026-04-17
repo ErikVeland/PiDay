@@ -1,8 +1,8 @@
 import SwiftUI
 
 // WHY: Free search is a self-contained feature — its own ViewModel, its own sheet.
-// The user types any digit sequence and sees where it appears in pi.
-// It reuses PiLiveLookupService under the hood with no changes to the date lookup flow.
+// The user types any digit sequence and sees where it appears in the live digit index.
+// (The main app experience is bundled-only for accuracy and offline support.)
 
 struct FreeSearchView: View {
     @Environment(AppViewModel.self) private var viewModel
@@ -29,7 +29,7 @@ struct FreeSearchView: View {
                     palette.background.ignoresSafeArea()
                 }
             }
-            .navigationTitle("Search Digits in π")
+            .navigationTitle("Search Digits")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -61,7 +61,7 @@ struct FreeSearchView: View {
                     .font(.system(.title3, design: .monospaced, weight: .semibold))
                     .focused($isInputFocused)
                     .onChange(of: searchVM.query) { searchVM.queryDidChange() }
-                    .accessibilityHint("Type a digit sequence to find where it appears in pi")
+                    .accessibilityHint("Type a digit sequence to find where it appears")
 
                 if searchVM.isLoading {
                     ProgressView()
@@ -144,7 +144,7 @@ struct FreeSearchView: View {
             Text("Not found")
                 .font(.headline)
                 .foregroundStyle(palette.ink)
-            Text("\"\(searchVM.query)\" does not appear in the first ~5 billion digits of pi.")
+            Text("\"\(searchVM.query)\" does not appear in the digit index searched by the live service.")
                 .font(.subheadline)
                 .foregroundStyle(palette.mutedInk)
                 .fixedSize(horizontal: false, vertical: true)
@@ -173,7 +173,7 @@ struct FreeSearchView: View {
             Text("Try your phone number, a year, or any sequence of digits.")
                 .font(.subheadline)
                 .foregroundStyle(palette.mutedInk)
-            Text("Searches the live pi index — requires internet.")
+            Text("Searches a live digit index — requires internet.")
                 .font(.caption)
                 .foregroundStyle((palette.mutedInk.opacity(0.6) as Color))
         }

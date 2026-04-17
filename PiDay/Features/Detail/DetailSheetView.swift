@@ -11,7 +11,6 @@ struct DetailSheetView: View {
     @Environment(\.openURL) private var openURL
     @Binding var isPresented: Bool
     @State private var showSavedDates = false
-    @State private var showFreeSearch = false
     @State private var showBattle = false
     @State private var showShareOptions = false
     @State private var navigateToPreferences = false
@@ -63,16 +62,6 @@ struct DetailSheetView: View {
 
                         Button { showBattle = true } label: {
                             Label("Battle", systemImage: "bolt.shield")
-                                .font(.subheadline.weight(.semibold))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(palette.accent)
-
-                        Button { showFreeSearch = true } label: {
-                            Label("Search", systemImage: "magnifyingglass")
                                 .font(.subheadline.weight(.semibold))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
@@ -172,13 +161,6 @@ struct DetailSheetView: View {
                 )
                 .environment(preferences)
             }
-            .sheet(isPresented: $showFreeSearch) {
-                FreeSearchView()
-                    .environment(viewModel)
-                    .environment(preferences)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-            }
             // WHY navigationDestination (not sheet): avoids sheet-within-sheet nesting.
             // @Environment(\.dismiss) in PreferencesView works for both push and sheet contexts.
             .navigationDestination(isPresented: $navigateToPreferences) {
@@ -236,13 +218,13 @@ struct DetailSheetView: View {
 
     private func notFoundCard(palette: ThemePalette) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Label("Not found in pi", systemImage: "magnifyingglass")
+            Label("Not found in \(viewModel.calendarFeaturedNumber.heatMapSymbol)", systemImage: "magnifyingglass")
                 .font(.headline)
                 .foregroundStyle(palette.panePrimaryText(for: colorScheme))
 
             Text(
                 viewModel.isSelectedDateInRange
-                    ? "This date does not appear as an exact sequence in the first 5 billion digits of pi."
+                    ? "This date does not appear as an exact sequence in the bundled digits of \(viewModel.calendarFeaturedNumber.heatMapSymbol)."
                     : "This date is outside the bundled search range (\(viewModel.indexedYearRange))."
             )
             .font(.subheadline)
@@ -276,7 +258,7 @@ struct DetailSheetView: View {
 
     private func reminderCard(palette: ThemePalette) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Pi Day Reminder")
+            Text("Featured Day Reminders")
                 .font(.headline)
                 .foregroundStyle(palette.panePrimaryText(for: colorScheme))
 
@@ -292,7 +274,7 @@ struct DetailSheetView: View {
                             openURL(settingsURL)
                         }
                     } else {
-                        let newState = await NotificationService.requestAndSchedulePiDay()
+                        let newState = await NotificationService.requestAndScheduleFeaturedDays()
                         viewModel.notificationAuthState = newState
                     }
                 }
@@ -311,7 +293,7 @@ struct DetailSheetView: View {
 
     private func delightCard(message: String, palette: ThemePalette) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Pi Whisper", systemImage: "sparkles")
+            Label("Digit Whisper", systemImage: "sparkles")
                 .font(.headline)
                 .foregroundStyle(palette.panePrimaryText(for: colorScheme))
 
@@ -327,11 +309,11 @@ struct DetailSheetView: View {
     private var reminderStatusText: String {
         switch viewModel.notificationAuthState {
         case .authorized:
-            return "Annual reminder scheduled for March 14 at 9:14 AM."
+            return "Annual reminders scheduled for each featured number day."
         case .denied:
-            return "Notifications are off for PiDay. Re-enable them in Settings if you want a yearly reminder."
+            return "Notifications are off. Re-enable them in Settings if you want yearly reminders."
         case .notDetermined:
-            return "Turn on a yearly Pi Day reminder after you decide you want it."
+            return "Turn on yearly reminders for featured number days."
         }
     }
 

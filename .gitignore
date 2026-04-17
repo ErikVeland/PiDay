@@ -62,3 +62,8 @@ AuthKey_*.p8
 *.log
 build_log.txt
 test.log
+
+# Python cache / local virtualenvs used by data scripts
+__pycache__/
+*.pyc
+.venv/

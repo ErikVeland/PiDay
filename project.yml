@@ -9,8 +9,8 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     GENERATE_INFOPLIST_FILE: YES
-    CURRENT_PROJECT_VERSION: 2
-    MARKETING_VERSION: 1.1
+    CURRENT_PROJECT_VERSION: 3
+    MARKETING_VERSION: 1.2
     DEVELOPMENT_TEAM: 54WU29TRTY
     CODE_SIGN_STYLE: Automatic
     # WHY: Xcode recommends these modern build settings. Storing them here means
@@ -29,7 +29,13 @@ targets:
       - path: PiDay
         excludes:
           - Resources
-      - path: PiDay/Resources/pi_2026_2035_index.json
+          # Legacy π-only + live-lookup code paths — intentionally excluded for the
+          # bundled-only multi-number release.
+          - Core/Repository/DefaultPiRepository.swift
+          - Core/Repository/PiRepository.swift
+          - Core/Repository/PiLiveLookupService.swift
+          - Features/FreeSearch
+      - path: PiDay/Resources
         buildPhase: resources
       - path: PiDay/PrivacyInfo.xcprivacy
         buildPhase: resources
@@ -73,7 +79,7 @@ targets:
         # Required for the Mac Catalyst app bundle to have a valid App Store
         # category and to silence Xcode's "No App Category is set" warning.
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
-        INFOPLIST_KEY_NSUserNotificationUsageDescription: "PiDay sends you a reminder on Pi Day (March 14) so you can celebrate with your digits."
+        INFOPLIST_KEY_NSUserNotificationUsageDescription: "PiDay can send yearly reminders on featured number days (Pi Day, Tau Day, and more)."
         # Mac Catalyst lets the iOS app (and its widget) run on macOS.
         # This covers iOS, iPadOS, and macOS with a single widget extension.
         SUPPORTS_MACCATALYST: YES
@@ -95,17 +101,25 @@ targets:
         excludes:
           - Info.plist
       - path: PiDay/Core/Domain/DateFormatOption.swift
+      - path: PiDay/Core/Domain/CalendarFeaturedNumber.swift
       - path: PiDay/Core/Domain/PiMatch.swift
       - path: PiDay/Core/Domain/PiStats.swift
       - path: PiDay/Core/Domain/SearchFormatPreference.swift
       - path: PiDay/Core/Data/DateStringGenerator.swift
       - path: PiDay/Core/Data/PiIndexPayload.swift
-      - path: PiDay/Core/Repository/DefaultPiRepository.swift
-      - path: PiDay/Core/Repository/PiRepository.swift
       - path: PiDay/Core/Repository/PiStore.swift
-      - path: PiDay/Core/Repository/PiLiveLookupService.swift
+      - path: PiDay/Core/Repository/FeaturedNumberRepository.swift
+      - path: PiDay/Core/Repository/DefaultFeaturedNumberRepository.swift
       - path: PiDay/Design/PiPalette.swift
       - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/tau_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/e_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/phi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/planck_2026_2035_index.json
         buildPhase: resources
       - path: PiDayWatchExtension/PrivacyInfo.xcprivacy
         buildPhase: resources
@@ -137,6 +151,7 @@ targets:
       # in an extension context.
       - path: PiDay/Core/Domain/DateFormatOption.swift
       - path: PiDay/Core/Domain/AppTheme.swift
+      - path: PiDay/Core/Domain/CalendarFeaturedNumber.swift
       - path: PiDay/Core/Domain/IndexingConvention.swift
       - path: PiDay/Core/Domain/PiMatch.swift
       - path: PiDay/Core/Domain/PiStats.swift
@@ -147,6 +162,14 @@ targets:
       - path: PiDay/Design/PiPalette.swift
       # The widget needs its own copy of the JSON index in its bundle.
       - path: PiDay/Resources/pi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/tau_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/e_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/phi_2026_2035_index.json
+        buildPhase: resources
+      - path: PiDay/Resources/planck_2026_2035_index.json
         buildPhase: resources
     dependencies:
       # AppIntents is required for AdvanceDateIntent (interactive widget buttons, iOS 17).
@@ -164,7 +187,7 @@ targets:
     platform: iOS
     sources:
       - PiDayTests
-      - path: PiDay/Resources/pi_2026_2035_index.json
+      - path: PiDay/Resources
         buildPhase: resources
     dependencies:
       - target: PiDay

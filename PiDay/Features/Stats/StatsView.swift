@@ -280,20 +280,21 @@ struct StatsView: View {
     }
 
     private func piDaySection(stats: PiStats, palette: ThemePalette) -> some View {
+        let featured = viewModel.calendarFeaturedNumber
         let sortedYears = stats.piDayStats.keys.sorted()
-        let bestPiDay = stats.piDayStats.min { $0.value < $1.value }
+        let bestFeaturedDay = stats.piDayStats.min { $0.value < $1.value }
 
         return VStack(alignment: .leading, spacing: 16) {
             SectionHeader(
-                title: "Pi Day Special",
-                subtitle: "March 14 across the index years",
+                title: "\(featured.title) Day Special",
+                subtitle: "\(featured.observedDayLabel) across the index years",
                 palette: palette
             )
 
-            if let bestPiDay {
+            if let bestFeaturedDay {
                 NerdFactCard(
-                    title: "Best March 14",
-                    message: "Pi Day \(bestPiDay.key) shows up earliest at digit \(viewModel.displayedPosition(for: bestPiDay.value).formatted()). Some years are simply more blessed by pi than others.",
+                    title: "Best year",
+                    message: "\(featured.observedDayLabel) \(bestFeaturedDay.key) shows up earliest at digit \(viewModel.displayedPosition(for: bestFeaturedDay.value).formatted()).",
                     palette: palette
                 )
             }

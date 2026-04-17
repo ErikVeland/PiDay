@@ -3,20 +3,34 @@ import XCTest
 
 final class PiDayCoreTests: XCTestCase {
     @MainActor
-    private final class MockPiRepository: PiRepository {
-        var indexedYearRange: ClosedRange<Int>? = 2026...2035
-        var excerptRadius: Int = 20
-        var piStats: PiStats? = nil
+    private final class MockPiRepository: FeaturedNumberRepository {
+        var indexedYearRangeValue: ClosedRange<Int>? = 2026...2035
+        var excerptRadiusValue: Int = 20
+        var statsValue: PiStats? = nil
         var summaryResult: DateLookupSummary
 
         init(summaryResult: DateLookupSummary) {
             self.summaryResult = summaryResult
         }
 
-        func isInBundledRange(_ date: Date) -> Bool { false }
-        func loadBundledIndex() async throws {}
-        func summary(for date: Date, formats: [DateFormatOption]) async -> DateLookupSummary { summaryResult }
-        func bundledSummary(for date: Date, formats: [DateFormatOption]) -> DateLookupSummary { summaryResult }
+        func loadBundledIndexes() async throws {}
+
+        func indexedYearRange(for featuredNumber: CalendarFeaturedNumber) -> ClosedRange<Int>? {
+            indexedYearRangeValue
+        }
+
+        func excerptRadius(for featuredNumber: CalendarFeaturedNumber) -> Int {
+            excerptRadiusValue
+        }
+
+        func stats(for featuredNumber: CalendarFeaturedNumber) -> PiStats? {
+            statsValue
+        }
+
+        func summary(for featuredNumber: CalendarFeaturedNumber, date: Date, formats: [DateFormatOption]) -> DateLookupSummary {
+            summaryResult
+        }
+
         func clearCache() {}
     }
 
@@ -28,6 +42,24 @@ final class PiDayCoreTests: XCTestCase {
             }
             return url
         }
+    }
+
+    private var planckIndexURL: URL {
+        get throws {
+            let bundle = Bundle(for: type(of: self))
+            guard let url = bundle.url(forResource: "planck_2026_2035_index", withExtension: "json") else {
+                throw XCTSkip("planck_2026_2035_index.json not found in test bundle")
+            }
+            return url
+        }
+    }
+
+    private func bundledIndexURL(named name: String) throws -> URL {
+        let bundle = Bundle(for: type(of: self))
+        guard let url = bundle.url(forResource: name, withExtension: "json") else {
+            throw XCTSkip("\(name).json not found in test bundle")
+        }
+        return url
     }
 
     func testDateStringGeneratorProducesExpectedFormats() {
@@ -132,6 +164,33 @@ final class PiDayCoreTests: XCTestCase {
         XCTAssertEqual(summary.foundCount, 1)
     }
 
+    func testPlanckFeaturedIndexBundleDecodes() throws {
+        let store = PiStore()
+        try store.load(from: planckIndexURL)
+
+        let payload = try XCTUnwrap(store.payload)
+        XCTAssertEqual(payload.metadata.startYear, 2026)
+        XCTAssertEqual(payload.metadata.endYear, 2035)
+        XCTAssertFalse(payload.dates.isEmpty)
+    }
+
+    func testAllFeaturedNumberIndexesDecode() throws {
+        for resource in [
+            "pi_2026_2035_index",
+            "tau_2026_2035_index",
+            "e_2026_2035_index",
+            "phi_2026_2035_index",
+            "planck_2026_2035_index"
+        ] {
+            let store = PiStore()
+            try store.load(from: bundledIndexURL(named: resource))
+            let payload = try XCTUnwrap(store.payload, "Missing payload for \(resource)")
+            XCTAssertEqual(payload.metadata.startYear, 2026)
+            XCTAssertEqual(payload.metadata.endYear, 2035)
+            XCTAssertEqual(payload.dates.count, 3652, "Unexpected date count for \(resource)")
+        }
+    }
+
     func testIndexingConventionOffsetsDisplay() {
         XCTAssertEqual(IndexingConvention.oneBased.displayPosition(for: 314), 314)
         XCTAssertEqual(IndexingConvention.zeroBased.displayPosition(for: 314), 313)
@@ -146,6 +205,45 @@ final class PiDayCoreTests: XCTestCase {
         XCTAssertEqual(PiDelightCopy.freeSearchReaction(for: "42"), "Deep thought approves.")
         XCTAssertEqual(PiDelightCopy.freeSearchReaction(for: "8675309"), "Jenny mode unlocked.")
         XCTAssertNil(PiDelightCopy.freeSearchReaction(for: "123"))
+    }
+
+    func testCalendarFeaturedNumbersMapToExpectedDates() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        XCTAssertEqual(
+            calendar.dateComponents([.month, .day], from: CalendarFeaturedNumber.pi.highlightDate(inYear: 2026, calendar: calendar)!),
+            DateComponents(month: 3, day: 14)
+        )
+        XCTAssertEqual(
+            calendar.dateComponents([.month, .day], from: CalendarFeaturedNumber.pi416.highlightDate(inYear: 2026, calendar: calendar)!),
+            DateComponents(month: 4, day: 16)
+        )
+        XCTAssertEqual(
+            calendar.dateComponents([.month, .day], from: CalendarFeaturedNumber.planck.highlightDate(inYear: 2026, calendar: calendar)!),
+            DateComponents(month: 4, day: 14)
+        )
+    }
+
+    func testCalendarFeaturedNumberHighlightChecksCalendarDay() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        let quantumDay = calendar.date(from: DateComponents(year: 2026, month: 4, day: 14))!
+        let ordinaryDay = calendar.date(from: DateComponents(year: 2026, month: 4, day: 15))!
+
+        XCTAssertTrue(CalendarFeaturedNumber.planck.highlights(quantumDay, calendar: calendar))
+        XCTAssertFalse(CalendarFeaturedNumber.planck.highlights(ordinaryDay, calendar: calendar))
+    }
+
+    func testCalendarFeaturedNumbersExposeBrandingMetadata() {
+        XCTAssertEqual(CalendarFeaturedNumber.pi.logoSymbol, "π")
+        XCTAssertEqual(CalendarFeaturedNumber.pi.decimalPreview, "3.14159...")
+        XCTAssertEqual(CalendarFeaturedNumber.tau.logoSymbol, "τ")
+        XCTAssertEqual(CalendarFeaturedNumber.tau.decimalPreview, "6.28318...")
+        XCTAssertEqual(CalendarFeaturedNumber.euler.logoSymbol, "e")
+        XCTAssertEqual(CalendarFeaturedNumber.goldenRatio.logoSymbol, "φ")
+        XCTAssertTrue(CalendarFeaturedNumber.planck.decimalPreview.contains("10⁻¹⁵"))
     }
 
     @MainActor
@@ -166,7 +264,7 @@ final class PiDayCoreTests: XCTestCase {
         )
 
         let repository = MockPiRepository(summaryResult: leftSummary)
-        repository.piStats = PiStats(
+        repository.statsValue = PiStats(
             earliestMatch: nil,
             latestMatch: nil,
             averagePosition: 0,
@@ -241,7 +339,7 @@ final class PiDayCoreTests: XCTestCase {
             errorMessage: nil
         )
         let repository = MockPiRepository(summaryResult: summary)
-        repository.piStats = PiStats(
+        repository.statsValue = PiStats(
             earliestMatch: nil,
             latestMatch: nil,
             averagePosition: 0,
@@ -268,7 +366,7 @@ final class PiDayCoreTests: XCTestCase {
     }
 
     @MainActor
-    func testAppViewModelSurfacesLiveLookupErrors() async {
+    func testAppViewModelSurfacesLookupErrors() async {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         let date = calendar.date(from: DateComponents(calendar: calendar, year: 2042, month: 3, day: 14))!
@@ -277,32 +375,27 @@ final class PiDayCoreTests: XCTestCase {
             isoDate: "2042-03-14",
             matches: [PiMatchResult(query: "14032042", format: .ddmmyyyy, found: false, storedPosition: nil, excerpt: nil)],
             bestMatch: nil,
-            source: .live,
-            errorMessage: "Live pi lookup returned an unexpected response."
+            source: .bundled,
+            errorMessage: "Bundled index unavailable."
         )
 
         let repository = MockPiRepository(summaryResult: summary)
         let viewModel = AppViewModel(today: date, calendar: calendar, repository: repository)
 
-        // WHY two conditions: load() fires scheduleSelectionRefresh() and then
-        // immediately sets isLoading=false — before the lookup Task has run.
-        // Polling only on isLoading exits too early, leaving lookupSummary nil.
-        // We also gate on lookupSummary==nil so we wait for the live lookup
-        // result to land before reading errorMessage. The mock is synchronous,
-        // so this converges in a handful of 10ms iterations.
+        // Wait for the async startup load + selection refresh to complete.
         var timeout = 200
         while (viewModel.isLoading || viewModel.lookupSummary == nil) && timeout > 0 {
             try? await Task.sleep(for: .milliseconds(10))
             timeout -= 1
         }
 
-        XCTAssertEqual(viewModel.errorMessage, "Live pi lookup returned an unexpected response.")
-        XCTAssertEqual(viewModel.headerStatusText, "Live pi lookup returned an unexpected response.")
+        XCTAssertEqual(viewModel.errorMessage, "Bundled index unavailable.")
+        XCTAssertEqual(viewModel.headerStatusText, "Bundled index unavailable.")
         // WHY contains instead of equal: detailShareText prepends a locale-formatted
         // date string (e.g. "Friday, 14 March 2042" in en-GB, "March 14, 2042" in en-US).
         // Testing the invariant parts avoids CI failures on non-English locales.
         let shareText = viewModel.detailShareText
         XCTAssertTrue(shareText.contains("could not be searched right now."), "Unexpected share text: \(shareText)")
-        XCTAssertTrue(shareText.contains("Live pi lookup returned an unexpected response."), "Unexpected share text: \(shareText)")
+        XCTAssertTrue(shareText.contains("Bundled index unavailable."), "Unexpected share text: \(shareText)")
     }
 }
