@@ -53,6 +53,13 @@ PiDay.xcodeproj/
 *.dSYM.zip
 *.dSYM
 
+# pnpm
+.pnpm-store/
+
+# Large local artifacts (do not commit)
+piday-history-clean.bundle
+piday-working-tree-backup.tgz
+
 # Credentials / secrets
 *.p12
 *.mobileprovision
