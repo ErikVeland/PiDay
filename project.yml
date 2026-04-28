@@ -9,8 +9,11 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     GENERATE_INFOPLIST_FILE: YES
-    CURRENT_PROJECT_VERSION: 3
-    MARKETING_VERSION: 1.2
+    # Build number. This may be overridden by CI (e.g., Xcode Cloud auto-increment),
+    # but keeping it high avoids accidentally reusing a closed train/build.
+    CURRENT_PROJECT_VERSION: 60
+    # Marketing version (CFBundleShortVersionString / App Store "train" version)
+    MARKETING_VERSION: 1.3
     DEVELOPMENT_TEAM: 54WU29TRTY
     CODE_SIGN_STYLE: Automatic
     # WHY: Xcode recommends these modern build settings. Storing them here means
